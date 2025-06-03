@@ -1,4 +1,4 @@
-# stairs_arduino
+# stairs animations
 
 Arduino project based on Arduino UNO R4 WiFi
 Designed for strip led WS2811 [16 stairs x 27 leds (9 pixels)]
