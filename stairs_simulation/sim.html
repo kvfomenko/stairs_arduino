@@ -1,0 +1,76 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LED simulation</title>
+    <style>
+        canvas { background: grey; display: block; margin: 20px auto; }
+        button { display: block; margin: 10px auto; padding: 10px; font-size: 16px; }
+    </style>
+</head>
+<body bgcolor="grey">
+<table style="border: 0px; width: 90%">
+<tr>
+    <td style="width: 30%">
+        <select id="work_mode">
+            <option value="0" selected>Off</option>
+            <option value="1">Non-random</option>
+            <option value="2">Random mode</option>
+            <option value="3">Random color</option>
+            <option value="4">Random mode and color</option>
+        </select>
+        <br/>
+        <select id="animation_mode">
+            <option value="1">Mode 1 slow gradient wave</option>
+            <option value="2">Mode 2 slow ball</option>
+            <option value="3">Mode 3 slow single color wave</option>
+            <option value="4">Mode 4 fast waves</option>
+            <option value="5">Mode 5 worms</option>
+            <option value="6">Mode 6 music vertical single color</option>
+            <option value="7">Mode 7 music vertical gradient</option>
+            <option value="8">Mode 8 music horizontal single color</option>
+            <option value="9">Mode 9 music horizontal gradient</option>
+            <option value="10" selected>Mode 10 snakes</option>
+            <option value="11">Mode 11 sine</option>
+        </select>
+        <br/>
+        <select id="main_color1">
+            <!--option value="0">White</option-->
+            <option value="1" selected>Red</option>
+            <option value="2">Green</option>
+            <option value="3">Blue</option>
+            <option value="4">Cyan</option>
+            <option value="5">Magenta</option>
+            <option value="6">Yellow</option>
+        </select>
+        <br/>
+        <select id="main_color2">
+            <!--option value="0">White</option-->
+            <option value="1">Red</option>
+            <option value="2">Green</option>
+            <option value="3" selected>Blue</option>
+            <option value="4">Cyan</option>
+            <option value="5">Magenta</option>
+            <option value="6">Yellow</option>
+        </select>
+
+        <br/><br/><br/><br/><br/>
+        <div id="pins">0</div>
+        <div id="power">0</div>
+        <div id="debug"></div>
+
+    </td>
+    <td><canvas id="ledCanvas"></canvas></td>
+    <td style="width: 10%">
+        <button id="sensor6">Move sensor</button>
+        <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+        <button id="sensor5">Move sensor</button>
+    </td>
+</tr>
+</table>
+
+
+<script src="sim.js"></script>
+</body>
+</html>
