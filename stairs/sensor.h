@@ -15,8 +15,8 @@ float last_start_distance_top = 0;
 float last_start_distance_bottom = 0;
 int distance_top_min = 30;
 int distance_top_max = 90;
-int distance_bottom_min = 30;
-int distance_bottom_max = 60;
+int distance_bottom_min = 100;
+int distance_bottom_max = 90;
 
 const int num_bins = 50;
 const int max_value = 500;
