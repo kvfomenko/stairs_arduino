@@ -30,18 +30,19 @@ float lux_coef = 5.0;
 ArduinoLEDMatrix matrix;
 
 //wifi
+#include "credentials.h"
 #include "WiFiS3.h"
 #include "WiFiSSLClient.h"
 #include "IPAddress.h"
-char ssid[] = "KF";
-char pass[] = "19781979";
+char ssid[] = WIFI_SSID;
+char pass[] = WIFI_PASS;
 int status = WL_IDLE_STATUS;
 
 //tg
 #include <AsyncTelegram2.h>
 WiFiSSLClient client;
 AsyncTelegram2 myBot(client);
-const char* token = "5087541658:AAHGz90kUzEWJzo0Xh7rPMGaEyVHHCL0N2w";
+const char* token = TG_TOKEN;
 ReplyKeyboard myReplyKbd;
 TBMessage msg;
 String msgText = "";
