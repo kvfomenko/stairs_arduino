@@ -81,3 +81,10 @@ bool startsWithIgnoreCase(const String& text, const String& prefix) {
   return true;
 }
 
+
+float get_analog_voltage(int analogPin) {
+  int analogValue = analogRead(analogPin);  // 0–4095
+  float voltage = (float)analogValue * 3.3 / 4095; // перевод в вольты
+  return voltage;
+}
+

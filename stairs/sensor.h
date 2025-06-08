@@ -1,3 +1,7 @@
+
+#define SONIC_SENSOR 1
+#define IR_SENSOR 2
+
 //ultrasonic sensors HC-SR04
 #define TOP_TRIG_PIN     D9
 #define TOP_ECHO_PIN     D10
@@ -10,13 +14,22 @@ float distance_bottom = 0;
 float new_distance_top = 0;
 float new_distance_bottom = 0;
 float distance_threshold = 5;
-
 float last_start_distance_top = 0;
 float last_start_distance_bottom = 0;
+
+//IR sensor HC-SR501
+#define BOTTOM_IR_SENSOR1_PIN A2 //D11
+#define BOTTOM_IR_SENSOR2_PIN A3 //D12
+float THRESHOLD_VOLTAGE = 0.25;
+float voltage_pin1;
+float voltage_pin2;
+float last_start_voltage_sensor1 = 0;
+float last_start_voltage_sensor2 = 0;
+
 int distance_top_min = 30;
-int distance_top_max = 90;
-int distance_bottom_min = 100;
-int distance_bottom_max = 90;
+int distance_top_max = 80;
+int distance_bottom_min = 30;
+int distance_bottom_max = 80;
 
 const int num_bins = 50;
 const int max_value = 500;
