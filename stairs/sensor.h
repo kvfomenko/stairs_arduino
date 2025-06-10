@@ -25,11 +25,15 @@ float voltage_pin1;
 float voltage_pin2;
 float last_start_voltage_sensor1 = 0;
 float last_start_voltage_sensor2 = 0;
+int value_pin1;
+int value_pin2;
+int last_start_value_sensor1 = 0;
+int last_start_value_sensor2 = 0;
 
 int distance_top_min = 30;
 int distance_top_max = 80;
 int distance_bottom_min = 30;
-int distance_bottom_max = 80;
+int distance_bottom_max = 20;
 
 const int num_bins = 50;
 const int max_value = 500;

@@ -98,24 +98,16 @@ void tg_setup() {
     myReplyKbd.addButton("TOP");
     myReplyKbd.addButton("BOTTOM");
     myReplyKbd.addRow();
-    myReplyKbd.addButton("OFF");
-    myReplyKbd.addButton("ON");
+    myReplyKbd.addButton("RND-OFF");
     myReplyKbd.addButton("RND-M");
     myReplyKbd.addButton("RND-C");
     myReplyKbd.addButton("RND-M-C");
     myReplyKbd.addRow();
-    myReplyKbd.addButton("1");
-    myReplyKbd.addButton("2");
-    myReplyKbd.addButton("3");
-    myReplyKbd.addButton("4");
-    myReplyKbd.addButton("5");
-    myReplyKbd.addButton("10");
-    myReplyKbd.addButton("11");
-    myReplyKbd.addRow();
-    myReplyKbd.addButton("6");
-    myReplyKbd.addButton("7");
-    myReplyKbd.addButton("8");
-    myReplyKbd.addButton("9");
+    myReplyKbd.addButton("ALWAYS-OFF");
+    myReplyKbd.addButton("ALWAYS-ON");
+    myReplyKbd.addButton("NIGHT-ON");
+    myReplyKbd.addButton("SENSORS");
+    myReplyKbd.addButton("MUSIC");
     myReplyKbd.addRow();
     myReplyKbd.addButton("RANGE");
     myReplyKbd.addButton("HIST");
@@ -125,15 +117,22 @@ void tg_setup() {
     myReplyKbd.enableResize();
 
     delay(1000); //Pause before clearing messages
+    myBot.setUpdateTime(20000);
+
     while (myBot.getNewMessage(msg)) {
       log("Skipping old message: " + msg.text);
-      delay(100);
+      delay(1000);
     }
     log("Old messages cleared!");
+
+    //myBot.reset();
 }
 
 
 void tg_loop() {
+    log("in tg_loop");
+    myBot.setUpdateTime(tg_loop_interval);
+
     while (myBot.getNewMessage(msg)) {
       msgText = msg.text;
       log("Message #" + String(msg.messageID) + ": " + msgText);
@@ -174,8 +173,11 @@ void tg_loop() {
             + "\n\nLAST_TOP: " + String((int)last_start_distance_top) 
             + "\nLAST_BOTTOM: " + String((int)last_start_distance_bottom) 
             + "\nLAST_VOLTAGE:" + String(last_start_voltage_sensor1) + "V " + String(last_start_voltage_sensor2) + "V "
-            + "\n\nLAST_DIRECTION: " + String(last_direction) + "\n\n"
-            + "/range_set_top_min " + String(distance_top_min) + "\n/range_set_top_max " + String(distance_top_max) + "\n/range_set_bottom_min " + String(distance_bottom_min) + "\n/range_set_bottom_max " + String(distance_bottom_max));
+            + "\nValue:" + String(last_start_value_sensor1)  + "/" + String(last_start_value_sensor2)
+            + "\n\nLAST_DIRECTION: " + String(last_direction)
+            + "\n\n/range_set_top_min " + String(distance_top_min) + "\n/range_set_top_max " + String(distance_top_max) 
+            + "\n/range_set_bottom_min " + String(distance_bottom_min) + "\n/range_set_bottom_max " + String(distance_bottom_max)
+            + "\n/range_set_threshold_voltage " + String(THRESHOLD_VOLTAGE));
 
         } else if (msgText.equalsIgnoreCase("HIST")) {
           String hist_top = getHistogram("top");
@@ -200,15 +202,34 @@ void tg_loop() {
             val = msgText.substring(strlen("/range_set_bottom_max"), strlen("/range_set_bottom_max")+4);
             log("set " + msgText + " val:" + val);
             distance_bottom_max = val.toInt();
+          } else if (startsWithIgnoreCase(msgText, "/range_set_threshold_voltage")) {
+            val = msgText.substring(strlen("/range_set_threshold_voltage"), strlen("/range_set_threshold_voltage")+5); // 1.35
+            log("set " + msgText + " val:" + val);
+            THRESHOLD_VOLTAGE = val.toFloat();
           }
 
         } else if (msgText.equalsIgnoreCase("MODE")) {
-          myBot.sendMessage(msg, "WORK_MODE: " + work_modes[work_mode] + "\nMODE: " + String(animation_mode));
+          myBot.sendMessage(msg, "WORK_MODE: " + work_modes[work_mode] + "\nRND_MODE: " + rnd_modes[rnd_mode] + "\nANIMATION_MODE: " + String(animation_mode) + "\nMUSIC_MODE: " + String(music_mode));
+
+        } else if (msgText.equalsIgnoreCase("RND-OFF") || msgText.equalsIgnoreCase("RND-M") || msgText.equalsIgnoreCase("RND-C") || msgText.equalsIgnoreCase("RND-M-C")) {
+          rnd_mode = findInIndex(msgText, rnd_modes);
+          log("set rnd_mode " + String(rnd_mode));
+
+        } else if (msgText.equalsIgnoreCase("ALWAYS-OFF") || msgText.equalsIgnoreCase("ALWAYS-ON") || msgText.equalsIgnoreCase("NIGHT-ON") || msgText.equalsIgnoreCase("SENSORS") || msgText.equalsIgnoreCase("MUSIC")) {
+          work_mode = findInIndex(msgText, work_modes);
+          log("set work_mode " + String(work_mode));
+          if (msgText.equalsIgnoreCase("ALWAYS-ON") || msgText.equalsIgnoreCase("MUSIC")) {
+            clear_all();
+            start_animation();
+          } else {
+            is_start_animation = false;
+            finish_animation();
+          }
 
         } else if (msgText.equalsIgnoreCase("COLORS")) {
           myBot.sendMessage(msg, "COLOR1: " + main_color1_txt //String(main_color1.r) + "." + String(main_color1.g) + "." + String(main_color1.b) 
-            + "\n/RED" + "\n/GREEN" + "\n/BLUE" + "\n/CYAN" + "\n/MAGENTA" + "\n/YELLOW\n"
-            + "\nCOLOR2: " + main_color2_txt //String(main_color2.r) + "." + String(main_color2.g) + "." + String(main_color2.b) 
+            + "\n/RED" + "\n/GREEN" + "\n/BLUE" + "\n/CYAN" + "\n/MAGENTA" + "\n/YELLOW"
+            + "\n\nCOLOR2: " + main_color2_txt //String(main_color2.r) + "." + String(main_color2.g) + "." + String(main_color2.b) 
             + "\n/red" + "\n/green" + "\n/blue" + "\n/cyan" + "\n/magenta" + "\n/yellow"
             );
 
@@ -250,9 +271,6 @@ void tg_loop() {
           main_color2 = Yellow;
           main_color2_txt = "Yellow";
 
-        } else if (msgText.equalsIgnoreCase("OFF") || msgText.equalsIgnoreCase("ON") || msgText.equalsIgnoreCase("RND-M") || msgText.equalsIgnoreCase("RND-C") || msgText.equalsIgnoreCase("RND-M-C")) {
-          work_mode = findWorkModeIndex(msgText);
-          log("set work_mode " + String(work_mode));
         
         } else if (msgText.equals("1") || msgText.equals("2") || msgText.equals("3") || msgText.equals("4") || msgText.equals("5") || msgText.equals("6") || msgText.equals("10") || msgText.equals("11")) { 
           finish_animation();
@@ -262,7 +280,7 @@ void tg_loop() {
         } else if (msgText.equals("6") || msgText.equals("7") || msgText.equals("8") || msgText.equals("9")) {
           animation_mode = msgText.toInt();
           log("set music_mode " + String(animation_mode));
-          start_animation();
+          //start_animation();
 
         } else {
           myBot.sendMessage(msg, "/start");
@@ -298,15 +316,16 @@ void setup() {
 
 void loop() {
 
-    if (isModeForMusic(animation_mode)) {
+    //if (isModeForMusic(animation_mode)) {
+    if (work_mode == 4/*MUSIC*/) {
       if (millis() - last_mic_millis >= 1) {
         last_mic_millis = millis();
         mic_loop();
       }
-      tg_loop_interval = 30000;
+      tg_loop_interval = 20000;
     } else {
       if (animation_frame == 0) {
-        tg_loop_interval = 500;
+        tg_loop_interval = 1000;
         if (millis() - last_br_millis >= 2*1000) {
           last_br_millis = millis();
           brightness_loop();
@@ -318,12 +337,12 @@ void loop() {
       }
     }
 
-    main_animate_loop();
-
     if (millis() - last_tg_millis >= tg_loop_interval) {
       last_tg_millis = millis();
       tg_loop();
     }
+
+    main_animate_loop();
 
 }
 
@@ -333,7 +352,7 @@ void main_animate_loop() {
         if (animation_frame > 0) {
           animate_loop();
           FastLED.show();
-          tg_loop_interval = 30000;
+          tg_loop_interval = 20000;
         }
     }
 }
@@ -425,85 +444,89 @@ void sensors_loop() {
   long duration_top;
   long duration_bottom;
 
-  if (TOP_SENS == SONIC_SENSOR) {
-    duration_top = measure_echo_time(TOP_TRIG_PIN, TOP_ECHO_PIN);
-    if (duration_top > 0 && duration_top < TIMEOUT_MCS) {
-      // Расчёт расстояния (343 м/сек) (в см)
-      new_distance_top = duration_top * 343 * 100 / 1000000 / 2;
-      if (new_distance_top > track_in_histogram_top_min && new_distance_top < track_in_histogram_top_max) {
-        addValueToHistogram("top", new_distance_top);
+  if (work_mode == 3 /*SENSORS*/) {
+
+    if (TOP_SENS == SONIC_SENSOR) {
+      duration_top = measure_echo_time(TOP_TRIG_PIN, TOP_ECHO_PIN);
+      if (duration_top > 0 && duration_top < TIMEOUT_MCS) {
+        // Расчёт расстояния (343 м/сек) (в см)
+        new_distance_top = duration_top * 343 * 100 / 1000000 / 2;
+        if (new_distance_top > track_in_histogram_top_min && new_distance_top < track_in_histogram_top_max) {
+          addValueToHistogram("top", new_distance_top);
+        } else {
+          addValueToHistogram("top", 0);
+        }
       } else {
         addValueToHistogram("top", 0);
       }
-    } else {
-      addValueToHistogram("top", 0);
+      distance_top = getValFromHistogram("top");
+    } else if (TOP_SENS == IR_SENSOR) {
+      //not implemented yet
+      distance_top = 0;
     }
-    distance_top = getValFromHistogram("top");
-  } else if (TOP_SENS == IR_SENSOR) {
-    //not implemented yet
-    distance_top = 0;
-  }
 
-  if (BOTTOM_SENS == SONIC_SENSOR) {
-    duration_bottom = measure_echo_time(BOTTOM_TRIG_PIN, BOTTOM_ECHO_PIN);
-    if (duration_bottom > 0 && duration_bottom < TIMEOUT_MCS) {
-      // Расчёт расстояния (343 м/сек) (в см)
-      new_distance_bottom = duration_bottom * 343 * 100 / 1000000 / 2;
-      if (new_distance_bottom > track_in_histogram_bottom_min && new_distance_bottom < track_in_histogram_bottom_max) {
-        addValueToHistogram("bottom", new_distance_bottom);
+    if (BOTTOM_SENS == SONIC_SENSOR) {
+      duration_bottom = measure_echo_time(BOTTOM_TRIG_PIN, BOTTOM_ECHO_PIN);
+      if (duration_bottom > 0 && duration_bottom < TIMEOUT_MCS) {
+        // Расчёт расстояния (343 м/сек) (в см)
+        new_distance_bottom = duration_bottom * 343 * 100 / 1000000 / 2;
+        if (new_distance_bottom > track_in_histogram_bottom_min && new_distance_bottom < track_in_histogram_bottom_max) {
+          addValueToHistogram("bottom", new_distance_bottom);
+        } else {
+          addValueToHistogram("bottom", 0);
+        }
       } else {
         addValueToHistogram("bottom", 0);
       }
+      distance_bottom = getValFromHistogram("bottom");
+
+    } else if (BOTTOM_SENS == IR_SENSOR) {
+      value_pin1 = analogRead(BOTTOM_IR_SENSOR1_PIN);  // 0–4095
+      value_pin2 = analogRead(BOTTOM_IR_SENSOR2_PIN);  // 0–4095
+      voltage_pin1 = get_analog_voltage_from_value(value_pin1);
+      voltage_pin2 = get_analog_voltage_from_value(value_pin2);
+      //if (digitalRead(BOTTOM_IR_SENSOR1_PIN) == HIGH || digitalRead(BOTTOM_IR_SENSOR2_PIN) == HIGH) {
+      if (voltage_pin1 >= THRESHOLD_VOLTAGE || voltage_pin2 >= THRESHOLD_VOLTAGE) {
+        distance_bottom = distance_bottom_min;
+      } else {
+        distance_bottom = 0;
+      }
+    }
+
+    if (millis() - last_hist_millis >= 20) {
+      last_hist_millis = millis();
+      String hist_top = ".";
+      String hist_bottom = ".";
+      if (TOP_SENS == SONIC_SENSOR) {
+        hist_top = getHistogram("top");
+      }
+      if (BOTTOM_SENS == SONIC_SENSOR) {
+        hist_bottom = getHistogram("bottom");
+      }
+      log("::" + distance_top_bar + " . " + distance_bottom_bar + "  " + hist_top + " " + hist_bottom + "  " + String((int)distance_top) + " / " + String((int)distance_bottom) + " " + voltage_pin1 + " / " + voltage_pin2);
+    }
+
+    if (distance_top >= distance_top_min && distance_top <= distance_top_max) {
+      distance_top_bar = distanceBar(distance_top);
+      distance_bottom_bar = distanceBar(0.0);
+      set_direction(DOWN);
+      if (animation_frame == 0) {
+        start_animation();
+      }
+    } else if (distance_bottom >= distance_bottom_min && distance_bottom <= distance_bottom_max) {
+      distance_top_bar = distanceBar(0.0);
+      if (BOTTOM_SENS == SONIC_SENSOR) {
+        distance_bottom_bar = distanceBar(distance_bottom);
+      }
+      set_direction(UP);
+      if (animation_frame == 0) {
+        start_animation();
+      }
     } else {
-      addValueToHistogram("bottom", 0);
-    }
-    distance_bottom = getValFromHistogram("bottom");
-
-  } else if (BOTTOM_SENS == IR_SENSOR) {
-    voltage_pin1 = get_analog_voltage(BOTTOM_IR_SENSOR1_PIN);
-    voltage_pin2 = get_analog_voltage(BOTTOM_IR_SENSOR2_PIN);
-    //if (digitalRead(BOTTOM_IR_SENSOR1_PIN) == HIGH || digitalRead(BOTTOM_IR_SENSOR2_PIN) == HIGH) {
-    if (voltage_pin1 >= THRESHOLD_VOLTAGE || voltage_pin2 >= THRESHOLD_VOLTAGE) {
-      distance_bottom = distance_bottom_min;
-    } else {
-      distance_bottom = 0;
+      distance_top_bar = distanceBar(0.0);
+      distance_bottom_bar = distanceBar(0.0);
     }
   }
-
-  if (millis() - last_hist_millis >= 20) {
-    last_hist_millis = millis();
-    String hist_top = ".";
-    String hist_bottom = ".";
-    if (TOP_SENS == SONIC_SENSOR) {
-      hist_top = getHistogram("top");
-    }
-    if (BOTTOM_SENS == SONIC_SENSOR) {
-      hist_bottom = getHistogram("bottom");
-    }
-    log("::" + distance_top_bar + " . " + distance_bottom_bar + "  " + hist_top + " " + hist_bottom + "  " + String((int)distance_top) + " / " + String((int)distance_bottom) + " " + voltage_pin1 + " / " + voltage_pin2);
-  }
-
-  if (distance_top >= distance_top_min && distance_top <= distance_top_max) {
-    distance_top_bar = distanceBar(distance_top);
-    distance_bottom_bar = distanceBar(0.0);
-    set_direction(DOWN);
-    if (animation_frame == 0) {
-      start_animation();
-    }
-  } else if (distance_bottom >= distance_bottom_min && distance_bottom <= distance_bottom_max) {
-    distance_top_bar = distanceBar(0.0);
-    if (BOTTOM_SENS == SONIC_SENSOR) {
-      distance_bottom_bar = distanceBar(distance_bottom);
-    }
-    set_direction(UP);
-    if (animation_frame == 0) {
-      start_animation();
-    }
-  } else {
-    distance_top_bar = distanceBar(0.0);
-    distance_bottom_bar = distanceBar(0.0);
-  }
-
 }
 
 

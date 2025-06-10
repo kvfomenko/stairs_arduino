@@ -31,9 +31,12 @@ const float red_watts_per_led = 0.0767;  // 9 Watt per meter (WS2811 30 leds per
 const float green_watts_per_led = 0.1116;
 const float blue_watts_per_led = 0.1116;
 
-const String work_modes[] = {"OFF", "ON", "RND-M", "RND-C", "RND-M-C"};
-int work_mode = 3;
+const String work_modes[] = {"OFF", "ALWAYS-ON", "NIGHT-ON", "SENSORS", "MUSIC"};
+int work_mode = findInIndex("SENSORS", work_modes);
+const String rnd_modes[] = {"RND-OFF", "RND-M", "RND-C", "RND-M-C"};
+int rnd_mode = findInIndex("RND-C", rnd_modes);
 int animation_mode = 10;
+int music_mode = 4;
 CRGB main_color1 = Red;
 CRGB main_color2 = Blue;
 String main_color1_txt = "Red";
@@ -311,6 +314,8 @@ void start_animation() {
     last_start_distance_bottom = distance_bottom;
     last_start_voltage_sensor1 = voltage_pin1;
     last_start_voltage_sensor2 = voltage_pin2;
+    last_start_value_sensor1 = value_pin1;
+    last_start_value_sensor2 = value_pin2;
     log("start_animation UP t:" + String((int)last_start_distance_top) + " b:" + String((int)last_start_distance_bottom));
   }
   if (is_start_animation && direction == DOWN) {
@@ -323,6 +328,8 @@ void start_animation() {
     last_start_distance_bottom = 0;
     last_start_voltage_sensor1 = 0;
     last_start_voltage_sensor2 = 0;
+    last_start_value_sensor1 = 0;
+    last_start_value_sensor2 = 0;
     log("start_animation DOWN t:" + String((int)last_start_distance_top) + " b:" + String((int)last_start_distance_bottom));
   }
 
@@ -333,7 +340,7 @@ void finish_animation() {
     animation_frame = 0;
     clear_all();
 
-    if (work_mode == 2 || work_mode == 4) {
+    if (rnd_mode == findInIndex("RND-M", rnd_modes) || rnd_mode == findInIndex("RND-M-C", rnd_modes)) {
         // Смена случайного animation_mode
         int next_animation_mode = MODES_FOR_RANDOM[random(0, sizeof(MODES_FOR_RANDOM) / sizeof(MODES_FOR_RANDOM[0]))];
         if (next_animation_mode == animation_mode) {
@@ -347,7 +354,7 @@ void finish_animation() {
         Serial.println(animation_mode);
     }
 
-    if (work_mode == 3 || work_mode == 4) {
+    if (rnd_mode == findInIndex("RND-C", rnd_modes) || rnd_mode == findInIndex("RND-M-C", rnd_modes)) {
         // Смена случайного цвета main_color1
         int new_col_index = get_random_color_index();
         CRGB next_main_color1 = colors_list[new_col_index];
@@ -386,18 +393,10 @@ void finish_animation() {
 }
 
 
-int findWorkModeIndex(const String& msgText) {
-  for (int i = 0; i < sizeof(work_modes) / sizeof(work_modes[0]); i++) {
-    if (work_modes[i] == msgText) {
-      return i;  // Возвращаем индекс, если нашли совпадение
-    }
-  }
-  return 0;  // Возвращаем 0, если не нашли совпадение
-}
-
-
 void animate_loop() {
     max_animation_frame = 0;
+
+  if (work_mode == 1 /*ALWAYS-ON*/ || work_mode == 2 /*NIGHT-ON*/ || work_mode == 3 /*SENSORS*/) {
 
     if (animation_mode == 1) {
         //slow gradient wave
@@ -675,147 +674,6 @@ void animate_loop() {
 
     }
 
-    if (animation_mode == 6) {
-        //music vertical single color
-        int frames_per_pick_down = 8;
-        CRGB main_color = main_color1;
-        main_color = CRGB(main_color[0]/1.5, main_color[1]/1.5, main_color[2]/1.5);
-        CRGB back_color = Black; //calc_back_color();
-        CRGB pic_color = main_color2;
-        boolean use_pick = true;
-
-        // Преобразуем значение от 0-100 в диапазон от 0-16
-        //int fill_steps = (((float)globalMicValue / 100.0) * NUM_STEPS) - 1;
-        int fill_steps = map(globalMicValue, 0, 100, 0, NUM_STEPS);  //NUM_STEPS-1 wrong
-        //console.log(fill_steps);
-
-        if (fill_steps >= step_on_prev1) {
-            step_on_prev1 = fill_steps;
-        } else {
-            if (animation_frame % frames_per_pick_down == 1 && step_on_prev1 >= 0) {
-                step_on_prev1--;
-            }
-        }
-        //console.log(fill_steps, step_on_prev1);
-
-        for (int i = 0; i < NUM_STEPS; i++) {
-            if (i <= fill_steps) {
-                fill_step(i, main_color);
-            } else {
-                fill_step(i, back_color);
-            }
-            if (use_pick && i == step_on_prev1) {
-                fill_step(i, pic_color);
-            }
-        }
-    }
-
-    if (animation_mode == 7) {
-        //music vertical gradient
-        if (animation_frame % 2 == 0) {
-            CRGB back_color = Black;
-            int hue1 = animation_frame % 360; // цикл по кругу оттенков 0–359
-            int hue2 = (animation_frame + 270) % 360;
-            pal_color1 = hslToCRGB((float)hue1 / 360, 1, 0.5); // s=1, l=0.5 — яркие чистые цвета
-            pal_color2 = hslToCRGB((float)hue2 / 360, 1, 0.5);
-            //decrease green and blue
-            pal_color1 = CRGB(pal_color1.r, pal_color1.g / 4, pal_color1.b / 4);
-            pal_color2 = CRGB(pal_color2.r, pal_color2.g / 4, pal_color2.b / 4);
-
-            // Преобразуем значение от 0-100 в диапазон от 0-16
-            //int fill_steps = ((globalMicValue / 100) * NUM_STEPS) - 1;
-            int fill_steps = map(globalMicValue, 0, 100, 0, NUM_STEPS);
-            /*if (animation_frame % 16 == 0) {
-                log("colors " + String(hue1) + "/" + String(hue2) + " - " + CRGBtoString(pal_color1) + "/" + CRGBtoString(pal_color2));
-            }*/
-
-            for (int step_i = 0; step_i < NUM_STEPS; step_i++) {
-                if (step_i <= fill_steps) {
-                    CRGB pal_color_i = CRGB(
-                        pal_color1.r * step_i / fill_steps + pal_color2.r * (fill_steps - step_i) / fill_steps,
-                        pal_color1.g * step_i / fill_steps + pal_color2.g * (fill_steps - step_i) / fill_steps,
-                        pal_color1.b * step_i / fill_steps + pal_color2.b * (fill_steps - step_i) / fill_steps
-                    );
-
-                    fill_step(step_i, pal_color_i);
-                } else {
-                    fill_step(step_i, back_color);
-                }
-            }
-        }
-    }
-
-    if (animation_mode == 8) {
-        //music horizontal single color
-        int frames_per_pick_down = 8;
-        CRGB main_color = main_color1;
-        main_color = CRGB(main_color[0]/1.5, main_color[1]/1.5, main_color[2]/1.5);
-        CRGB back_color = Black; //calc_back_color();
-        CRGB pic_color = main_color2;
-        boolean use_pick = false;
-
-        // Преобразуем значение от 0-100 в диапазон от 0-9
-        //int fill_steps = ((globalMicValue / 100) * POINTS_PER_STEP) - 1;
-        int fill_steps = map(globalMicValue, 0, 100, 0, POINTS_PER_STEP);
-        //console.log(fill_steps);
-
-        if (fill_steps >= step_on_prev1) {
-            step_on_prev1 = fill_steps;
-        } else {
-            if (animation_frame % frames_per_pick_down == 1 && step_on_prev1 >= 0) {
-                step_on_prev1--;
-            }
-        }
-
-        for (int step_i = 0; step_i < NUM_STEPS; step_i++) {
-            for (int led_i = 0; led_i < POINTS_PER_STEP; led_i++) {
-                if (led_i <= fill_steps) {
-                    leds[step_i * POINTS_PER_STEP + led_i] = main_color;
-                } else {
-                    leds[step_i * POINTS_PER_STEP + led_i] = back_color;
-                }
-                if (use_pick && led_i == step_on_prev1) {
-                    leds[step_i * POINTS_PER_STEP + led_i] = pic_color;
-                }
-            }
-        }
-    }
-
-    if (animation_mode == 9) {
-        //music horizontal gradient
-        if (animation_frame % 2 == 0) {
-            CRGB back_color = Black;
-            int hue1 = animation_frame % 360; // цикл по кругу оттенков 0–359
-            int hue2 = (animation_frame + 270) % 360;
-            pal_color1 = hslToCRGB((float)hue1 / 360, 1, 0.5); // s=1, l=0.5 — яркие чистые цвета
-            pal_color2 = hslToCRGB((float)hue2 / 360, 1, 0.5);
-            //decrease green and blue
-            pal_color1 = CRGB(pal_color1.r, pal_color1.g / 4, pal_color1.b / 4);
-            pal_color2 = CRGB(pal_color2.r, pal_color2.g / 4, pal_color2.b / 4);
-
-            // Преобразуем значение от 0-100 в диапазон от 0-16
-            int fill_steps = map(globalMicValue, 0, 100, 0, POINTS_PER_STEP);
-            /*if (animation_frame % 16 == 0) {
-                log("colors " + String(hue1) + "/" + String(hue2) + " - " + CRGBtoString(pal_color1) + "/" + CRGBtoString(pal_color2));
-            }*/
-
-            for (int step_i = 0; step_i < NUM_STEPS; step_i++) {
-                for (int led_i = 0; led_i < POINTS_PER_STEP; led_i++) {
-                    if (led_i <= fill_steps) {
-                        CRGB pal_color_i = CRGB(
-                            pal_color1[0] * led_i / fill_steps + pal_color2[0] * (fill_steps - led_i) / fill_steps,
-                            pal_color1[1] * led_i / fill_steps + pal_color2[1] * (fill_steps - led_i) / fill_steps,
-                            pal_color1[2] * led_i / fill_steps + pal_color2[2] * (fill_steps - led_i) / fill_steps
-                        );
-
-                        leds[step_i * POINTS_PER_STEP + led_i] = pal_color_i;
-                    } else {
-                        leds[step_i * POINTS_PER_STEP + led_i] = back_color;
-                    }
-                }
-            }
-        }
-    }
 
     if (animation_mode == 10) {
         //snakes
@@ -919,6 +777,155 @@ void animate_loop() {
             }
         }
     }
+  }
+
+  if (work_mode == 5 /*MUSIC*/) {
+    //animation_mode == 6
+    if (music_mode == 1) {
+        //music vertical single color
+        int frames_per_pick_down = 8;
+        CRGB main_color = main_color1;
+        main_color = CRGB(main_color[0]/1.5, main_color[1]/1.5, main_color[2]/1.5);
+        CRGB back_color = Black; //calc_back_color();
+        CRGB pic_color = main_color2;
+        boolean use_pick = true;
+
+        // Преобразуем значение от 0-100 в диапазон от 0-16
+        //int fill_steps = (((float)globalMicValue / 100.0) * NUM_STEPS) - 1;
+        int fill_steps = map(globalMicValue, 0, 100, 0, NUM_STEPS);  //NUM_STEPS-1 wrong
+        //console.log(fill_steps);
+
+        if (fill_steps >= step_on_prev1) {
+            step_on_prev1 = fill_steps;
+        } else {
+            if (animation_frame % frames_per_pick_down == 1 && step_on_prev1 >= 0) {
+                step_on_prev1--;
+            }
+        }
+        //console.log(fill_steps, step_on_prev1);
+
+        for (int i = 0; i < NUM_STEPS; i++) {
+            if (i <= fill_steps) {
+                fill_step(i, main_color);
+            } else {
+                fill_step(i, back_color);
+            }
+            if (use_pick && i == step_on_prev1) {
+                fill_step(i, pic_color);
+            }
+        }
+    }
+
+    //animation_mode == 7
+    if (music_mode == 2) {
+        //music vertical gradient
+        if (animation_frame % 2 == 0) {
+            CRGB back_color = Black;
+            int hue1 = animation_frame % 360; // цикл по кругу оттенков 0–359
+            int hue2 = (animation_frame + 270) % 360;
+            pal_color1 = hslToCRGB((float)hue1 / 360, 1, 0.5); // s=1, l=0.5 — яркие чистые цвета
+            pal_color2 = hslToCRGB((float)hue2 / 360, 1, 0.5);
+            //decrease green and blue
+            pal_color1 = CRGB(pal_color1.r, pal_color1.g / 4, pal_color1.b / 4);
+            pal_color2 = CRGB(pal_color2.r, pal_color2.g / 4, pal_color2.b / 4);
+
+            // Преобразуем значение от 0-100 в диапазон от 0-16
+            //int fill_steps = ((globalMicValue / 100) * NUM_STEPS) - 1;
+            int fill_steps = map(globalMicValue, 0, 100, 0, NUM_STEPS);
+            /*if (animation_frame % 16 == 0) {
+                log("colors " + String(hue1) + "/" + String(hue2) + " - " + CRGBtoString(pal_color1) + "/" + CRGBtoString(pal_color2));
+            }*/
+
+            for (int step_i = 0; step_i < NUM_STEPS; step_i++) {
+                if (step_i <= fill_steps) {
+                    CRGB pal_color_i = CRGB(
+                        pal_color1.r * step_i / fill_steps + pal_color2.r * (fill_steps - step_i) / fill_steps,
+                        pal_color1.g * step_i / fill_steps + pal_color2.g * (fill_steps - step_i) / fill_steps,
+                        pal_color1.b * step_i / fill_steps + pal_color2.b * (fill_steps - step_i) / fill_steps
+                    );
+
+                    fill_step(step_i, pal_color_i);
+                } else {
+                    fill_step(step_i, back_color);
+                }
+            }
+        }
+    }
+
+    //animation_mode == 8
+    if (music_mode == 3) {
+        //music horizontal single color
+        int frames_per_pick_down = 8;
+        CRGB main_color = main_color1;
+        main_color = CRGB(main_color[0]/1.5, main_color[1]/1.5, main_color[2]/1.5);
+        CRGB back_color = Black; //calc_back_color();
+        CRGB pic_color = main_color2;
+        boolean use_pick = false;
+
+        // Преобразуем значение от 0-100 в диапазон от 0-9
+        //int fill_steps = ((globalMicValue / 100) * POINTS_PER_STEP) - 1;
+        int fill_steps = map(globalMicValue, 0, 100, 0, POINTS_PER_STEP);
+        //console.log(fill_steps);
+
+        if (fill_steps >= step_on_prev1) {
+            step_on_prev1 = fill_steps;
+        } else {
+            if (animation_frame % frames_per_pick_down == 1 && step_on_prev1 >= 0) {
+                step_on_prev1--;
+            }
+        }
+
+        for (int step_i = 0; step_i < NUM_STEPS; step_i++) {
+            for (int led_i = 0; led_i < POINTS_PER_STEP; led_i++) {
+                if (led_i <= fill_steps) {
+                    leds[step_i * POINTS_PER_STEP + led_i] = main_color;
+                } else {
+                    leds[step_i * POINTS_PER_STEP + led_i] = back_color;
+                }
+                if (use_pick && led_i == step_on_prev1) {
+                    leds[step_i * POINTS_PER_STEP + led_i] = pic_color;
+                }
+            }
+        }
+    }
+
+    //animation_mode == 9
+    if (music_mode == 4) {
+        //music horizontal gradient
+        if (animation_frame % 2 == 0) {
+            CRGB back_color = Black;
+            int hue1 = animation_frame % 360; // цикл по кругу оттенков 0–359
+            int hue2 = (animation_frame + 270) % 360;
+            pal_color1 = hslToCRGB((float)hue1 / 360, 1, 0.5); // s=1, l=0.5 — яркие чистые цвета
+            pal_color2 = hslToCRGB((float)hue2 / 360, 1, 0.5);
+            //decrease green and blue
+            pal_color1 = CRGB(pal_color1.r, pal_color1.g / 4, pal_color1.b / 4);
+            pal_color2 = CRGB(pal_color2.r, pal_color2.g / 4, pal_color2.b / 4);
+
+            // Преобразуем значение от 0-100 в диапазон от 0-16
+            int fill_steps = map(globalMicValue, 0, 100, 0, POINTS_PER_STEP);
+            /*if (animation_frame % 16 == 0) {
+                log("colors " + String(hue1) + "/" + String(hue2) + " - " + CRGBtoString(pal_color1) + "/" + CRGBtoString(pal_color2));
+            }*/
+
+            for (int step_i = 0; step_i < NUM_STEPS; step_i++) {
+                for (int led_i = 0; led_i < POINTS_PER_STEP; led_i++) {
+                    if (led_i <= fill_steps) {
+                        CRGB pal_color_i = CRGB(
+                            pal_color1[0] * led_i / fill_steps + pal_color2[0] * (fill_steps - led_i) / fill_steps,
+                            pal_color1[1] * led_i / fill_steps + pal_color2[1] * (fill_steps - led_i) / fill_steps,
+                            pal_color1[2] * led_i / fill_steps + pal_color2[2] * (fill_steps - led_i) / fill_steps
+                        );
+
+                        leds[step_i * POINTS_PER_STEP + led_i] = pal_color_i;
+                    } else {
+                        leds[step_i * POINTS_PER_STEP + led_i] = back_color;
+                    }
+                }
+            }
+        }
+    }
+  } // if work_mode == MUSIC
 
 
     /*float power = calc_power();
@@ -930,8 +937,12 @@ void animate_loop() {
 
     // check animation finish
     animation_frame++;
-    if (animation_frame > max_animation_frame && !isModeForMusic(animation_mode)) {
+    if (animation_frame > max_animation_frame && work_mode != 4/*MUSIC*/) {
         finish_animation();
+        if (work_mode == 1 /*ALWAYS-ON*/) {
+            direction = -direction;
+            start_animation();
+        }
     }
 
 }

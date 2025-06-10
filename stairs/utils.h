@@ -81,10 +81,33 @@ bool startsWithIgnoreCase(const String& text, const String& prefix) {
   return true;
 }
 
-
 float get_analog_voltage(int analogPin) {
   int analogValue = analogRead(analogPin);  // 0–4095
   float voltage = (float)analogValue * 3.3 / 4095; // перевод в вольты
   return voltage;
 }
 
+
+float get_analog_voltage_from_value(int analogValue) {
+  float voltage = (float)analogValue * 3.3 / 4095; // перевод в вольты
+  return voltage;
+}
+
+template <size_t N>
+int findInIndex(const String& msgText, const String (&arr)[N]) {
+  for (int i = 0; i < N; ++i) {
+    if (arr[i] == msgText) return i;
+  }
+  return 0;
+}
+
+/*
+int findInIndex2(const String& msgText, const String arr[]) {
+  for (int i = 0; i < sizeof(arr) / sizeof(arr[0]); i++) {
+    if (arr[i] == msgText) {
+      return i;  // Возвращаем индекс, если нашли совпадение
+    }
+  }
+  return 0;  // Возвращаем 0, если не нашли совпадение
+}
+*/
