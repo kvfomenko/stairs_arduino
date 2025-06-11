@@ -141,7 +141,7 @@ bool check_frames(int frame_from, int frame_to, int key_frame_interval) {
 
     if (animation_frame >= frame_from && animation_frame <= frame_to) {
         if (animation_frame % key_frame_interval == 1 || frame_from == frame_to) {
-            key_frames = intdiv(frame_to - frame_from, key_frame_interval);
+            key_frames = intdiv(frame_to - frame_from - key_frame_interval, key_frame_interval);
             key_frame = intdiv(animation_frame - frame_from, key_frame_interval); // 0..key_frames-1
 
             if (key_frames < 1) {
@@ -396,7 +396,7 @@ void finish_animation() {
 void animate_loop() {
     max_animation_frame = 0;
 
-  if (work_mode == 1 /*ALWAYS-ON*/ || work_mode == 2 /*NIGHT-ON*/ || work_mode == 3 /*SENSORS*/) {
+  if (work_mode != 4 /*MUSIC*/) {
 
     if (animation_mode == 1) {
         //slow gradient wave
@@ -509,29 +509,29 @@ void animate_loop() {
                 if (check_frames((NUM_STEPS-i-1)*speedon,(NUM_STEPS-i-1)*speedon+32,4)) {
                     draw_step3(i,
                         back_color,
-                        CRGB(progress*wave_color1[0],progress*wave_color1[1],progress*wave_color1[2]),
+                        CRGB(progress*wave_color1.r,progress*wave_color1.g,progress*wave_color1.b),
                         back_color);
                 }
 
                 if (check_frames((NUM_STEPS-i-1)*speedon+32,(NUM_STEPS-i-1)*speedon+64,4)) {
                     draw_step3(i,
-                        CRGB(progress*wave_color1[0],progress*wave_color1[1],progress*wave_color1[2]),
+                        CRGB(progress*wave_color1.r,progress*wave_color1.g,progress*wave_color1.b),
                         wave_color1,
-                        CRGB(progress*wave_color1[0],progress*wave_color1[1],progress*wave_color1[2]));
+                        CRGB(progress*wave_color1.r,progress*wave_color1.g,progress*wave_color1.b));
                 }
                 if (i<NUM_STEPS){
                     if (check_frames((NUM_STEPS-i-1)*speedoff+64,(NUM_STEPS-i-1)*speedoff+96,4)) {
                         draw_step3(i+1,
                             wave_color1,
-                            CRGB(degress*wave_color1[0], degress*wave_color1[1], degress*wave_color1[2]),
+                            CRGB(degress*wave_color1.r, degress*wave_color1.g, degress*wave_color1.b),
                             wave_color1);
                     }
 
                     if (check_frames((NUM_STEPS-i-1)*speedoff+96,(NUM_STEPS-i-1)*speedoff+128,4)) {
                         draw_step3(i+1,
-                            CRGB(degress*wave_color1[0], degress*wave_color1[1], degress*wave_color1[2]),
+                            CRGB(degress*wave_color1.r, degress*wave_color1.g, degress*wave_color1.b),
                             back_color,
-                            CRGB(degress*wave_color1[0], degress*wave_color1[1], degress*wave_color1[2]));
+                            CRGB(degress*wave_color1.r, degress*wave_color1.g, degress*wave_color1.b));
                     }
                 }
 
@@ -543,7 +543,7 @@ void animate_loop() {
         //fast waves
         CRGB wave_color1 = main_color1;
         int seconds = 12;
-        int rolls_per_sec = 4; // 1,2,4
+        int rolls_per_sec = 2; // 1,2,4
         CRGB back_color = calc_back_color();
         int frames_for_1step = FPS / rolls_per_sec / NUM_STEPS;
 
@@ -779,13 +779,13 @@ void animate_loop() {
     }
   }
 
-  if (work_mode == 5 /*MUSIC*/) {
+  if (work_mode == 4 /*MUSIC*/) {
     //animation_mode == 6
     if (music_mode == 1) {
         //music vertical single color
         int frames_per_pick_down = 8;
         CRGB main_color = main_color1;
-        main_color = CRGB(main_color[0]/1.5, main_color[1]/1.5, main_color[2]/1.5);
+        main_color = CRGB(main_color.r/1.5, main_color.g/1.5, main_color.b/1.5);
         CRGB back_color = Black; //calc_back_color();
         CRGB pic_color = main_color2;
         boolean use_pick = true;
@@ -857,7 +857,7 @@ void animate_loop() {
         //music horizontal single color
         int frames_per_pick_down = 8;
         CRGB main_color = main_color1;
-        main_color = CRGB(main_color[0]/1.5, main_color[1]/1.5, main_color[2]/1.5);
+        main_color = CRGB(main_color.r/1.5, main_color.g/1.5, main_color.b/1.5);
         CRGB back_color = Black; //calc_back_color();
         CRGB pic_color = main_color2;
         boolean use_pick = false;
@@ -912,9 +912,9 @@ void animate_loop() {
                 for (int led_i = 0; led_i < POINTS_PER_STEP; led_i++) {
                     if (led_i <= fill_steps) {
                         CRGB pal_color_i = CRGB(
-                            pal_color1[0] * led_i / fill_steps + pal_color2[0] * (fill_steps - led_i) / fill_steps,
-                            pal_color1[1] * led_i / fill_steps + pal_color2[1] * (fill_steps - led_i) / fill_steps,
-                            pal_color1[2] * led_i / fill_steps + pal_color2[2] * (fill_steps - led_i) / fill_steps
+                            pal_color1.r * led_i / fill_steps + pal_color2.r * (fill_steps - led_i) / fill_steps,
+                            pal_color1.g * led_i / fill_steps + pal_color2.g * (fill_steps - led_i) / fill_steps,
+                            pal_color1.b * led_i / fill_steps + pal_color2.b * (fill_steps - led_i) / fill_steps
                         );
 
                         leds[step_i * POINTS_PER_STEP + led_i] = pal_color_i;

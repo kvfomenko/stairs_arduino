@@ -456,7 +456,7 @@ function animate_loop() {
     if (animation_mode === 3) {
         //single color wave
         let wave_color1 = main_color1;
-        let back_color = calc_back_color();
+        let back_color = Black; //calc_back_color();
         let speedon = 16;
         let speedoff = 32;
 
@@ -483,6 +483,7 @@ function animate_loop() {
                 }
                 if (i>0){
                     if (check_frames(i*speedoff+64,i*speedoff+96,4)) {
+                        //console.log('degress ' + degress + ' ' + progress + ' ' + key_frame + '/' + key_frames + '_' + animation_frame + '   ' + (i*speedoff+64) +'...'+ (i*speedoff+96));
                         //draw_step3(i-1, Red, CRGB(degress*MAX_ILLUM, 0, 0), Red);
                         draw_step3(i-1,
                             wave_color1,
@@ -539,8 +540,8 @@ function animate_loop() {
     if (animation_mode === 4) {
         //fast waves
         let wave_color1 = main_color1;
-        let seconds = 5;
-        let rolls_per_sec = 4; // 1,2,4
+        let seconds = 6;
+        let rolls_per_sec = 2; // 1,2,4
         let back_color = calc_back_color();
         let frames_for_1step = FPS / rolls_per_sec / NUM_STEPS;
 
@@ -974,7 +975,7 @@ function check_frames(frame_from, frame_to, key_frame_interval) {
 
     if (animation_frame >= frame_from && animation_frame <= frame_to) {
         if (animation_frame % key_frame_interval === 1 || frame_from === frame_to) {
-            key_frames = intdiv(frame_to - frame_from, key_frame_interval);
+            key_frames = intdiv(frame_to - frame_from - key_frame_interval, key_frame_interval);
             key_frame = intdiv(animation_frame - frame_from, key_frame_interval); // 0..key_frames-1
             if (key_frames < 1) {
                 key_frames = 1;

@@ -125,7 +125,7 @@ void tg_setup() {
     }
     log("Old messages cleared!");
 
-    //myBot.reset();
+    //start_animation();
 }
 
 
@@ -209,7 +209,11 @@ void tg_loop() {
           }
 
         } else if (msgText.equalsIgnoreCase("MODE")) {
-          myBot.sendMessage(msg, "WORK_MODE: " + work_modes[work_mode] + "\nRND_MODE: " + rnd_modes[rnd_mode] + "\nANIMATION_MODE: " + String(animation_mode) + "\nMUSIC_MODE: " + String(music_mode));
+          myBot.sendMessage(msg, "WORK_MODE: " + work_modes[work_mode] + "-" + String(work_mode) 
+          + "\nRND_MODE: " + rnd_modes[rnd_mode] + "-" + String(rnd_mode) 
+          + "\nANIMATION_MODE: " + String(animation_mode) 
+          + "\nMUSIC_MODE: " + String(music_mode)
+          + "\nAnimation_frame: " + String(animation_frame));
 
         } else if (msgText.equalsIgnoreCase("RND-OFF") || msgText.equalsIgnoreCase("RND-M") || msgText.equalsIgnoreCase("RND-C") || msgText.equalsIgnoreCase("RND-M-C")) {
           rnd_mode = findInIndex(msgText, rnd_modes);
@@ -277,9 +281,9 @@ void tg_loop() {
           animation_mode = msgText.toInt();
           log("set animation_mode " + String(animation_mode));
 
-        } else if (msgText.equals("6") || msgText.equals("7") || msgText.equals("8") || msgText.equals("9")) {
-          animation_mode = msgText.toInt();
-          log("set music_mode " + String(animation_mode));
+        } else if (msgText.equalsIgnoreCase("M1") || msgText.equalsIgnoreCase("M2") || msgText.equalsIgnoreCase("M3") || msgText.equalsIgnoreCase("M4")) {
+          music_mode = msgText.substring(1, 2).toInt();
+          log("set music_mode " + String(music_mode));
           //start_animation();
 
         } else {
@@ -534,9 +538,9 @@ int last_mic_log_millis = 0;
 void mic_loop() {
   globalMicValue = getMicVal(micPin, micMethod);
 
-  if (millis() - last_mic_log_millis >= 200) {
+  if (millis() - last_mic_log_millis >= 50) {
     last_mic_log_millis = millis();
     String graph = bar(globalMicValue);
-    //Serial.println(String(globalMicValue) + " ::: " + graph);
+    Serial.println(String(globalMicValue) + " ::: " + graph);
   }
 }

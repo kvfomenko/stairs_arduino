@@ -19,7 +19,7 @@ String bar(int value) {
   int count = value / 10;
   String result = "";
   for (int i = 0; i < count; i++) {
-    result += "|";
+    result += "█";
   }
   if (result != "") {
     result += " ";
