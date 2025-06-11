@@ -95,25 +95,25 @@ void tg_setup() {
     Serial.println(myBot.getBotName());
     log("Telegram connected");
 
-    myReplyKbd.addButton("TOP");
-    myReplyKbd.addButton("BOTTOM");
-    myReplyKbd.addRow();
-    myReplyKbd.addButton("RND-OFF");
-    myReplyKbd.addButton("RND-M");
-    myReplyKbd.addButton("RND-C");
-    myReplyKbd.addButton("RND-M-C");
-    myReplyKbd.addRow();
     myReplyKbd.addButton("ALWAYS-OFF");
     myReplyKbd.addButton("ALWAYS-ON");
     myReplyKbd.addButton("NIGHT-ON");
     myReplyKbd.addButton("SENSORS");
     myReplyKbd.addButton("MUSIC");
     myReplyKbd.addRow();
+    myReplyKbd.addButton("RND-OFF");
+    myReplyKbd.addButton("RND-M");
+    myReplyKbd.addButton("RND-C");
+    myReplyKbd.addButton("RND-M-C");
+    myReplyKbd.addRow();
     myReplyKbd.addButton("RANGE");
     myReplyKbd.addButton("HIST");
     myReplyKbd.addButton("BRIGHTNESS");
     myReplyKbd.addButton("MODE");
     myReplyKbd.addButton("COLORS");
+    myReplyKbd.addRow();
+    myReplyKbd.addButton("TOP");
+    myReplyKbd.addButton("BOTTOM");
     myReplyKbd.enableResize();
 
     delay(1000); //Pause before clearing messages
@@ -222,8 +222,8 @@ void tg_loop() {
         } else if (msgText.equalsIgnoreCase("ALWAYS-OFF") || msgText.equalsIgnoreCase("ALWAYS-ON") || msgText.equalsIgnoreCase("NIGHT-ON") || msgText.equalsIgnoreCase("SENSORS") || msgText.equalsIgnoreCase("MUSIC")) {
           work_mode = findInIndex(msgText, work_modes);
           log("set work_mode " + String(work_mode));
+          clear_all();
           if (msgText.equalsIgnoreCase("ALWAYS-ON") || msgText.equalsIgnoreCase("MUSIC")) {
-            clear_all();
             start_animation();
           } else {
             is_start_animation = false;
