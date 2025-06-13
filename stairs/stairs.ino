@@ -276,7 +276,7 @@ void tg_loop() {
           main_color2_txt = "Yellow";
 
         
-        } else if (msgText.equals("1") || msgText.equals("2") || msgText.equals("3") || msgText.equals("4") || msgText.equals("5") || msgText.equals("6") || msgText.equals("10") || msgText.equals("11")) { 
+        } else if (msgText.equals("1") || msgText.equals("2") || msgText.equals("3") || msgText.equals("4") || msgText.equals("5") || msgText.equals("10") || msgText.equals("11") || msgText.equals("12")) { 
           finish_animation();
           animation_mode = msgText.toInt();
           log("set animation_mode " + String(animation_mode));

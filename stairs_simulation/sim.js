@@ -274,6 +274,24 @@ let sine_mask = [
     [DGrey,White,Grey,DGrey,DGrey,DGrey,DGrey,DGrey,DGrey],
     [DGrey,Grey,White,DGrey,DGrey,DGrey,DGrey,DGrey,DGrey],
 ];
+let arrow_mask = [
+    [DGrey,DGrey,DGrey,DGrey,Grey,DGrey,DGrey,DGrey,DGrey],
+    [DGrey,DGrey,DGrey,Grey,White,Grey,DGrey,DGrey,DGrey],
+    [DGrey,DGrey,Grey,White,Grey,White,Grey,DGrey,DGrey],
+    [DGrey,Grey,White,Grey,DGrey,Grey,White,Grey,DGrey],
+    [Grey,White,Grey,DGrey,DGrey,DGrey,Grey,White,Grey],
+    [White,Grey,DGrey,DGrey,DGrey,DGrey,DGrey,Grey,White],
+    [Grey,DGrey,DGrey,DGrey,DGrey,DGrey,DGrey,DGrey,Grey],
+    [DGrey,DGrey,DGrey,DGrey,DGrey,DGrey,DGrey,DGrey,DGrey],
+    [DGrey,DGrey,DGrey,DGrey,Grey,DGrey,DGrey,DGrey,DGrey],
+    [DGrey,DGrey,DGrey,Grey,White,Grey,DGrey,DGrey,DGrey],
+    [DGrey,DGrey,Grey,White,Grey,White,Grey,DGrey,DGrey],
+    [DGrey,Grey,White,Grey,DGrey,Grey,White,Grey,DGrey],
+    [Grey,White,Grey,DGrey,DGrey,DGrey,Grey,White,Grey],
+    [White,Grey,DGrey,DGrey,DGrey,DGrey,DGrey,Grey,White],
+    [Grey,DGrey,DGrey,DGrey,DGrey,DGrey,DGrey,DGrey,Grey],
+    [DGrey,DGrey,DGrey,DGrey,DGrey,DGrey,DGrey,DGrey,DGrey],
+];
 
 //console.log('center_num:', center_num);
 
@@ -909,6 +927,46 @@ function animate_loop() {
             }
         }
     }
+
+    if (animation_mode === 12) {
+        //sine
+        let arrow_color1 = main_color1;
+        let seconds = 6;
+        let rolls_per_sec = 64; // 1,2,4
+        let back_color = calc_back_color();
+
+        if (animation_frame === 1) {
+            sine_i = 0;
+            for (let i = 0; i < NUM_STEPS; i++) {
+                fill_step(i, back_color);
+            }
+        }
+
+        if (check_frames(2,seconds*FPS,4)) {
+            move_all();
+        }
+        if (check_frames(2,seconds*FPS,4)) {
+            let points = structuredClone(arrow_mask[sine_i]);
+
+            for (let i=0; i<POINTS_PER_STEP; i++) {
+                points[i] = CRGB(
+                    Math.round((points[i][0] * arrow_color1[0])/256),
+                    Math.round((points[i][1] * arrow_color1[1])/256),
+                    Math.round((points[i][2] * arrow_color1[2])/256));
+            }
+
+            if (direction === UP) {
+                draw_step(first_step, points);
+            } else {
+                draw_step(NUM_STEPS-1, points);
+            }
+            sine_i++;
+            if (sine_i===arrow_mask.length) {
+                sine_i = 0;
+            }
+        }
+    }
+
 
     //console.log('key_frames:', key_frames + ': ' + key_frame + ' >>> ' + progress*MAX_ILLUM + ' M:' + max_animation_frame);
     if (animation_frame % 8 === 1) {

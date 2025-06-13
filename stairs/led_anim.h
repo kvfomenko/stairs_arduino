@@ -1,7 +1,7 @@
 #define NUM_STEPS 16
 #define LEDS_PER_STEP 27
 #define POINTS_PER_STEP (LEDS_PER_STEP / 3) //LOGICAL_LEDS_PER_STEP
-#define MAX_POWER_SUPPLY 60
+#define MAX_POWER_SUPPLY 60 //watts
 
 #include "sensor.h"
 
@@ -9,8 +9,8 @@ CRGB leds[NUM_STEPS * POINTS_PER_STEP];
 
 int FPS = 64;
 int FRAME_MS = 1000 / FPS;
-int MODES_FOR_RANDOM[] = {1, 2, 3, 4, 5, 10, 11};
-int MODES_FOR_MUSIC[] = {6, 7, 8, 9};
+int MODES_FOR_RANDOM[] = {1, 2, 3, 4, 5, 10, 11, 12};
+//int MODES_FOR_MUSIC[] = {6, 7, 8, 9};
 int MAX_ILLUM = 255;
 
 const CRGB Black = CRGB(0,0,0);
@@ -34,8 +34,8 @@ const float blue_watts_per_led = 0.1116;
 const String work_modes[] = {"OFF", "ALWAYS-ON", "NIGHT-ON", "SENSORS", "MUSIC"};
 int work_mode = findInIndex("SENSORS", work_modes);
 const String rnd_modes[] = {"RND-OFF", "RND-M", "RND-C", "RND-M-C"};
-int rnd_mode = findInIndex("RND-C", rnd_modes);
-int animation_mode = 10;
+int rnd_mode = findInIndex("RND-M-C", rnd_modes);
+int animation_mode = 12;
 int music_mode = 4;
 CRGB main_color1 = Red;
 CRGB main_color2 = Blue;
@@ -86,8 +86,26 @@ CRGB sine_mask[SINE_MASK_ROWS][SINE_MASK_COLS] = {
   {DGrey, White, Grey, DGrey, DGrey, DGrey, DGrey, DGrey, DGrey},
   {DGrey, Grey, White, DGrey, DGrey, DGrey, DGrey, DGrey, DGrey}
 };
+CRGB arrow_mask[SINE_MASK_ROWS][SINE_MASK_COLS] = {
+    {DGrey,DGrey,DGrey,DGrey,Grey,DGrey,DGrey,DGrey,DGrey},
+    {DGrey,DGrey,DGrey,Grey,White,Grey,DGrey,DGrey,DGrey},
+    {DGrey,DGrey,Grey,White,Grey,White,Grey,DGrey,DGrey},
+    {DGrey,Grey,White,Grey,DGrey,Grey,White,Grey,DGrey},
+    {Grey,White,Grey,DGrey,DGrey,DGrey,Grey,White,Grey},
+    {White,Grey,DGrey,DGrey,DGrey,DGrey,DGrey,Grey,White},
+    {Grey,DGrey,DGrey,DGrey,DGrey,DGrey,DGrey,DGrey,Grey},
+    {DGrey,DGrey,DGrey,DGrey,DGrey,DGrey,DGrey,DGrey,DGrey},
+    {DGrey,DGrey,DGrey,DGrey,Grey,DGrey,DGrey,DGrey,DGrey},
+    {DGrey,DGrey,DGrey,Grey,White,Grey,DGrey,DGrey,DGrey},
+    {DGrey,DGrey,Grey,White,Grey,White,Grey,DGrey,DGrey},
+    {DGrey,Grey,White,Grey,DGrey,Grey,White,Grey,DGrey},
+    {Grey,White,Grey,DGrey,DGrey,DGrey,Grey,White,Grey},
+    {White,Grey,DGrey,DGrey,DGrey,DGrey,DGrey,Grey,White},
+    {Grey,DGrey,DGrey,DGrey,DGrey,DGrey,DGrey,DGrey,Grey},
+    {DGrey,DGrey,DGrey,DGrey,DGrey,DGrey,DGrey,DGrey,DGrey}
+};
 
-
+/*
 bool isModeForMusic(int mode) {
     int modesCount = sizeof(MODES_FOR_MUSIC) / sizeof(MODES_FOR_MUSIC[0]);
     for (int i = 0; i < modesCount; i++) {
@@ -96,7 +114,7 @@ bool isModeForMusic(int mode) {
         }
     }
     return false;
-}
+}*/
 
 float calc_power() {
   float power = 0;
@@ -777,6 +795,49 @@ void animate_loop() {
             }
         }
     }
+
+    if (animation_mode == 12) {
+        //arrow
+        CRGB arrow_color1 = main_color1;
+        const int seconds = 12;
+        const int rolls_per_sec = 64; // 1,2,4
+        CRGB back_color = calc_back_color();
+
+        if (animation_frame == 1) {
+            sine_i = 0;
+            for (int i = 0; i < NUM_STEPS; i++) {
+                fill_step(i, back_color);
+            }
+        }
+        
+        if (check_frames(2, seconds * FPS, 4)) {
+            move_all();
+        }
+
+        if (check_frames(2, seconds * FPS, 4)) {
+            // Создаем локальную копию массива цветов
+            CRGB points[POINTS_PER_STEP];
+            for (int i = 0; i < POINTS_PER_STEP; i++) {
+                points[i] = CRGB(
+                    (arrow_mask[sine_i][i].r * arrow_color1.r) / 256,
+                    (arrow_mask[sine_i][i].g * arrow_color1.g) / 256,
+                    (arrow_mask[sine_i][i].b * arrow_color1.b) / 256
+                );
+            }
+
+            if (direction == UP) {
+                draw_step(first_step, points);
+            } else {
+                draw_step(NUM_STEPS - 1, points);
+            }
+
+            sine_i++;
+            if (sine_i == SINE_MASK_ROWS) { // Нужно знать длину массива sine_mask
+                sine_i = 0;
+            }
+        }
+    }
+
   }
 
   if (work_mode == 4 /*MUSIC*/) {
