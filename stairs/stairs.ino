@@ -170,6 +170,7 @@ void tg_loop() {
         } else if (msgText.equalsIgnoreCase("RANGE")) {
           myBot.sendMessage(msg, "distance\nTOP: " + String((int)distance_top) + "cm\nBOTTOM: " + String((int)distance_bottom) + "cm"
             + "\nVOLTAGE:" + String(voltage_pin1) + "V " + String(voltage_pin2) + "V "
+            + "\navgVOLTAGE:" + String(avg_voltage_pin1) + "V " + String(avg_voltage_pin2) + "V "
             + "\n\nLAST_TOP: " + String((int)last_start_distance_top) 
             + "\nLAST_BOTTOM: " + String((int)last_start_distance_bottom) 
             + "\nLAST_VOLTAGE:" + String(last_start_voltage_sensor1) + "V " + String(last_start_voltage_sensor2) + "V "
@@ -489,8 +490,15 @@ void sensors_loop() {
       value_pin2 = analogRead(BOTTOM_IR_SENSOR2_PIN);  // 0–4095
       voltage_pin1 = get_analog_voltage_from_value(value_pin1);
       voltage_pin2 = get_analog_voltage_from_value(value_pin2);
+
+      addValueToHistogram("bottom1", voltage_pin1);
+      addValueToHistogram("bottom2", voltage_pin2);
+
+      avg_voltage_pin1 = getAvgVal("bottom1");
+      avg_voltage_pin2 = getAvgVal("bottom2");
+
       //if (digitalRead(BOTTOM_IR_SENSOR1_PIN) == HIGH || digitalRead(BOTTOM_IR_SENSOR2_PIN) == HIGH) {
-      if (voltage_pin1 >= THRESHOLD_VOLTAGE || voltage_pin2 >= THRESHOLD_VOLTAGE) {
+      if (avg_voltage_pin1 >= THRESHOLD_VOLTAGE || avg_voltage_pin2 >= THRESHOLD_VOLTAGE) {
         distance_bottom = distance_bottom_min;
       } else {
         distance_bottom = 0;
@@ -507,7 +515,8 @@ void sensors_loop() {
       if (BOTTOM_SENS == SONIC_SENSOR) {
         hist_bottom = getHistogram("bottom");
       }
-      log("::" + distance_top_bar + " . " + distance_bottom_bar + "  " + hist_top + " " + hist_bottom + "  " + String((int)distance_top) + " / " + String((int)distance_bottom) + " " + voltage_pin1 + " / " + voltage_pin2);
+      log("::" + distance_top_bar + " . " + distance_bottom_bar + "  " + hist_top + " " + hist_bottom + "  " + String((int)distance_top) + " / " + String((int)distance_bottom)
+       + " " + voltage_pin1 + " / " + voltage_pin2 + " AVG:" + avg_voltage_pin1 + " / " + avg_voltage_pin2);
     }
 
     if (distance_top >= distance_top_min && distance_top <= distance_top_max) {
