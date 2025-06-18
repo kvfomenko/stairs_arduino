@@ -168,17 +168,21 @@ void tg_loop() {
           myBot.sendMessage(msg, "brightness\nLEVEL: " + String(brightness) + "\nLUX: " + String(lux) + "\n/lux_coef_set " + String(lux_coef));
 
         } else if (msgText.equalsIgnoreCase("RANGE")) {
-          myBot.sendMessage(msg, "distance\nTOP: " + String((int)distance_top) + "cm\nBOTTOM: " + String((int)distance_bottom) + "cm"
-            + "\nVOLTAGE:" + String(voltage_pin1) + "V " + String(voltage_pin2) + "V "
-            + "\navgVOLTAGE:" + String(avg_voltage_pin1) + "V " + String(avg_voltage_pin2) + "V "
-            + "\n\nLAST_TOP: " + String((int)last_start_distance_top) 
-            + "\nLAST_BOTTOM: " + String((int)last_start_distance_bottom) 
+          myBot.sendMessage(msg, 
+            //"distance\nTOP: " + String((int)distance_top) + "cm\nBOTTOM: " + String((int)distance_bottom) + "cm"
+            "\navgTop:" + String(avg_voltage_pin3) + "V " + String(avg_voltage_pin4) + "V "
+            + "\navgBottom:" + String(avg_voltage_pin1) + "V " + String(avg_voltage_pin2) + "V "
+            //  + "\n\nLAST_TOP: " + String((int)last_start_distance_top) 
+            + "\nLAST_VOLTAGE:" + String(last_start_voltage_sensor3) + "V " + String(last_start_voltage_sensor4) + "V "
+            + "\nValue:" + String(last_start_value_sensor3)  + "/" + String(last_start_value_sensor4)
+            //+ "\nLAST_BOTTOM: " + String((int)last_start_distance_bottom) 
             + "\nLAST_VOLTAGE:" + String(last_start_voltage_sensor1) + "V " + String(last_start_voltage_sensor2) + "V "
             + "\nValue:" + String(last_start_value_sensor1)  + "/" + String(last_start_value_sensor2)
             + "\n\nLAST_DIRECTION: " + String(last_direction)
             + "\n\n/range_set_top_min " + String(distance_top_min) + "\n/range_set_top_max " + String(distance_top_max) 
             + "\n/range_set_bottom_min " + String(distance_bottom_min) + "\n/range_set_bottom_max " + String(distance_bottom_max)
-            + "\n/range_set_threshold_voltage " + String(THRESHOLD_VOLTAGE));
+            + "\n/range_set_threshold_voltage " + String(THRESHOLD_VOLTAGE))
+            ;
 
         } else if (msgText.equalsIgnoreCase("HIST")) {
           String hist_top = getHistogram("top");
@@ -347,11 +351,11 @@ void loop() {
       tg_loop();
     }
 
-    main_animate_loop();
+    led_animate_loop(); // also used inside ultrasonic sensor waiting loop
 
 }
 
-void main_animate_loop() {
+void led_animate_loop() {
     if (millis() - last_millis >= FRAME_MS-1) {
         last_millis = millis();
         if (animation_frame > 0) {
@@ -398,7 +402,7 @@ void brightness_loop() {
   }
 }
 
-int TOP_SENS = SONIC_SENSOR;
+int TOP_SENS = IR_SENSOR; //SONIC_SENSOR;
 int BOTTOM_SENS = IR_SENSOR;
 
 void sensors_setup() {
@@ -407,7 +411,8 @@ void sensors_setup() {
     pinMode(TOP_TRIG_PIN, OUTPUT);
     pinMode(TOP_ECHO_PIN, INPUT);
   } else if (TOP_SENS == IR_SENSOR) {
-    //not implemented yet
+    pinMode(TOP_IR_SENSOR1_PIN, INPUT);
+    pinMode(TOP_IR_SENSOR2_PIN, INPUT);
   }
 
   if (BOTTOM_SENS == SONIC_SENSOR) {
@@ -432,13 +437,13 @@ long measure_echo_time(uint8_t trigPin, uint8_t echoPin) {
   // Ждём HIGH от echo, с таймаутом
   long startTime = micros();
   while (digitalRead(echoPin) == LOW) {
-    main_animate_loop();
+    led_animate_loop();
     if (micros() - startTime > TIMEOUT_MCS) return TIMEOUT_MCS;  // таймаут ожидания начала импульса
   }
 
   long echoStart = micros();
   while (digitalRead(echoPin) == HIGH) {
-    main_animate_loop();
+    led_animate_loop();
     if (micros() - echoStart > TIMEOUT_MCS) return TIMEOUT_MCS;  // таймаут ожидания конца импульса
   }
 
@@ -457,17 +462,31 @@ void sensors_loop() {
         // Расчёт расстояния (343 м/сек) (в см)
         new_distance_top = duration_top * 343 * 100 / 1000000 / 2;
         if (new_distance_top > track_in_histogram_top_min && new_distance_top < track_in_histogram_top_max) {
-          addValueToHistogram("top", new_distance_top);
+          addValueToBuffer("top", new_distance_top);
         } else {
-          addValueToHistogram("top", 0);
+          addValueToBuffer("top", 0);
         }
       } else {
-        addValueToHistogram("top", 0);
+        addValueToBuffer("top", 0);
       }
       distance_top = getValFromHistogram("top");
     } else if (TOP_SENS == IR_SENSOR) {
-      //not implemented yet
-      distance_top = 0;
+      value_pin3 = analogRead(TOP_IR_SENSOR1_PIN);  // 0–4095
+      value_pin4 = analogRead(TOP_IR_SENSOR2_PIN);  // 0–4095
+      voltage_pin3 = get_analog_voltage_from_value(value_pin3);
+      voltage_pin4 = get_analog_voltage_from_value(value_pin4);
+
+      addValueToBuffer("top1", voltage_pin3);
+      addValueToBuffer("top2", voltage_pin4);
+
+      avg_voltage_pin3 = getAvgVal("top1");
+      avg_voltage_pin4 = getAvgVal("top2");
+
+      if (avg_voltage_pin3 >= THRESHOLD_VOLTAGE || avg_voltage_pin4 >= THRESHOLD_VOLTAGE) {
+        distance_top = distance_top_min;
+      } else {
+        distance_top = 0;
+      }
     }
 
     if (BOTTOM_SENS == SONIC_SENSOR) {
@@ -476,12 +495,12 @@ void sensors_loop() {
         // Расчёт расстояния (343 м/сек) (в см)
         new_distance_bottom = duration_bottom * 343 * 100 / 1000000 / 2;
         if (new_distance_bottom > track_in_histogram_bottom_min && new_distance_bottom < track_in_histogram_bottom_max) {
-          addValueToHistogram("bottom", new_distance_bottom);
+          addValueToBuffer("bottom", new_distance_bottom);
         } else {
-          addValueToHistogram("bottom", 0);
+          addValueToBuffer("bottom", 0);
         }
       } else {
-        addValueToHistogram("bottom", 0);
+        addValueToBuffer("bottom", 0);
       }
       distance_bottom = getValFromHistogram("bottom");
 
@@ -491,8 +510,8 @@ void sensors_loop() {
       voltage_pin1 = get_analog_voltage_from_value(value_pin1);
       voltage_pin2 = get_analog_voltage_from_value(value_pin2);
 
-      addValueToHistogram("bottom1", voltage_pin1);
-      addValueToHistogram("bottom2", voltage_pin2);
+      addValueToBuffer("bottom1", voltage_pin1);
+      addValueToBuffer("bottom2", voltage_pin2);
 
       avg_voltage_pin1 = getAvgVal("bottom1");
       avg_voltage_pin2 = getAvgVal("bottom2");
@@ -516,11 +535,15 @@ void sensors_loop() {
         hist_bottom = getHistogram("bottom");
       }
       log("::" + distance_top_bar + " . " + distance_bottom_bar + "  " + hist_top + " " + hist_bottom + "  " + String((int)distance_top) + " / " + String((int)distance_bottom)
-       + " " + voltage_pin1 + " / " + voltage_pin2 + " AVG:" + avg_voltage_pin1 + " / " + avg_voltage_pin2);
+       + " " + voltage_pin1 + " / " + voltage_pin2 + " AVG:" + avg_voltage_pin1 + " / " + avg_voltage_pin2
+       + " " + voltage_pin3 + " / " + voltage_pin4 + " AVG:" + avg_voltage_pin3 + " / " + avg_voltage_pin4
+       );
     }
 
     if (distance_top >= distance_top_min && distance_top <= distance_top_max) {
-      distance_top_bar = distanceBar(distance_top);
+      if (TOP_SENS == SONIC_SENSOR) {
+        distance_top_bar = distanceBar(distance_top);
+      }
       distance_bottom_bar = distanceBar(0.0);
       set_direction(DOWN);
       if (animation_frame == 0) {

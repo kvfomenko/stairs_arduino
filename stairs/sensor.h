@@ -2,7 +2,7 @@
 #define SONIC_SENSOR 1
 #define IR_SENSOR 2
 
-//ultrasonic sensors HC-SR04
+//US(ultrasonic) sensors HC-SR04
 #define TOP_TRIG_PIN D9
 #define TOP_ECHO_PIN D10
 #define BOTTOM_TRIG_PIN D11
@@ -20,17 +20,29 @@ float last_start_distance_bottom = 0;
 //IR sensor HC-SR501
 #define BOTTOM_IR_SENSOR1_PIN A2  //D11
 #define BOTTOM_IR_SENSOR2_PIN A3  //D12
-float THRESHOLD_VOLTAGE = 0.30;
+#define TOP_IR_SENSOR1_PIN A4
+#define TOP_IR_SENSOR2_PIN A5
+float THRESHOLD_VOLTAGE = 0.15;
 float voltage_pin1 = 0;
 float voltage_pin2 = 0;
+float voltage_pin3 = 0;
+float voltage_pin4 = 0;
 float avg_voltage_pin1 = 0;
 float avg_voltage_pin2 = 0;
+float avg_voltage_pin3 = 0;
+float avg_voltage_pin4 = 0;
 float last_start_voltage_sensor1 = 0;
 float last_start_voltage_sensor2 = 0;
+float last_start_voltage_sensor3 = 0;
+float last_start_voltage_sensor4 = 0;
 int value_pin1;
 int value_pin2;
+int value_pin3;
+int value_pin4;
 int last_start_value_sensor1 = 0;
 int last_start_value_sensor2 = 0;
+int last_start_value_sensor3 = 0;
+int last_start_value_sensor4 = 0;
 
 int distance_top_min = 30;
 int distance_top_max = 80;
@@ -40,22 +52,29 @@ int distance_bottom_max = 40;
 const int num_bins = 50;
 const int max_value = 500;
 const int value_step = max_value / num_bins;
-const int window_size = 10;
+const int window_size_us = 10;
+const int window_size_ir = 5;
 
 int histogram_top[num_bins] = { 0 };
 int histogram_bottom[num_bins] = { 0 };
-int values_top[window_size];  // Скольжение по window_size значений
-int values_bottom[window_size];
-float values_bottom1[window_size];
-float values_bottom2[window_size];
+int values_top[window_size_us];  // Скольжение по window_size значений
+int values_bottom[window_size_us];
+float values_bottom1[window_size_ir];
+float values_bottom2[window_size_ir];
+float values_top1[window_size_ir];
+float values_top2[window_size_ir];
 int current_index_top = 0;
 int current_index_bottom = 0;
 int current_index_bottom1 = 0;
 int current_index_bottom2 = 0;
+int current_index_top1 = 0;
+int current_index_top2 = 0;
 bool filled_top = false;  // Чтобы знать, когда набрали 100 значений
 bool filled_bottom = false;
 bool filled_bottom1 = false;
 bool filled_bottom2 = false;
+bool filled_top1 = false;
+bool filled_top2 = false;
 float track_in_histogram_top_min = 10;
 float track_in_histogram_top_max = 200;
 float track_in_histogram_bottom_min = 10;
@@ -101,7 +120,7 @@ String distanceBar(float distance) {
 String getHistogram(String sensor) {
   String hist = "";
   //Serial.println("Histogram: " + sensor);
-  int one_histogram_height = window_size / 2;
+  int one_histogram_height = window_size_us / 2;
   for (int i = 0; i < num_bins; i++) {
     if (sensor == "top") {
       int level = map(constrain(histogram_top[i], 0, one_histogram_height), 0, one_histogram_height, 0, 8);
@@ -147,7 +166,7 @@ void updateHistogram(String sensor) {
     }
 
     // Подсчёт
-    int count = filled_top ? window_size : current_index_top;
+    int count = filled_top ? window_size_us : current_index_top;
     for (int i = 0; i < count; i++) {
       int bin_index = values_top[i] / value_step;
       if (bin_index >= num_bins) bin_index = num_bins - 1;
@@ -160,7 +179,7 @@ void updateHistogram(String sensor) {
     }
 
     // Подсчёт
-    int count = filled_bottom ? window_size : current_index_bottom;
+    int count = filled_bottom ? window_size_us : current_index_bottom;
     for (int i = 0; i < count; i++) {
       int bin_index = values_bottom[i] / value_step;
       if (bin_index >= num_bins) bin_index = num_bins - 1;
@@ -176,14 +195,26 @@ float getAvgVal(String sensor) {
   float sum_val = 0;
   int count = 0;
 
-  if (sensor == "bottom1") {
-    count = filled_bottom1 ? window_size : current_index_bottom1;
+  if (sensor == "top1") {
+    count = filled_top1 ? window_size_ir : current_index_top1;
+    for (int i = 0; i < count; i++) {
+      sum_val += values_top1[i];
+    }
+
+  } else if (sensor == "top2") {
+    count = filled_top2 ? window_size_ir : current_index_top2;
+    for (int i = 0; i < count; i++) {
+      sum_val += values_top2[i];
+    }
+
+  } else if (sensor == "bottom1") {
+    count = filled_bottom1 ? window_size_ir : current_index_bottom1;
     for (int i = 0; i < count; i++) {
       sum_val += values_bottom1[i];
     }
 
   } else if (sensor == "bottom2") {
-    count = filled_bottom2 ? window_size : current_index_bottom2;
+    count = filled_bottom2 ? window_size_ir : current_index_bottom2;
     for (int i = 0; i < count; i++) {
       sum_val += values_bottom2[i];
     }
@@ -196,25 +227,35 @@ float getAvgVal(String sensor) {
   return avg_val;
 }
 
-void addValueToHistogram(String sensor, float value) {
+void addValueToBuffer(String sensor, float value) {
   if (sensor == "top") {
     values_top[current_index_top] = value;
-    current_index_top = (current_index_top + 1) % window_size;
+    current_index_top = (current_index_top + 1) % window_size_us;
     if (current_index_top == 0) filled_top = true;
+
+  } else if (sensor == "top1") {
+    values_top1[current_index_top1] = value;
+    current_index_top1 = (current_index_top1 + 1) % window_size_ir;
+    if (current_index_top1 == 0) filled_top1 = true;
+
+  } else if (sensor == "top2") {
+    values_top2[current_index_top2] = value;
+    current_index_top2 = (current_index_top2 + 1) % window_size_ir;
+    if (current_index_top2 == 0) filled_top2 = true;
 
   } else if (sensor == "bottom") {
     values_bottom[current_index_bottom] = value;
-    current_index_bottom = (current_index_bottom + 1) % window_size;
+    current_index_bottom = (current_index_bottom + 1) % window_size_us;
     if (current_index_bottom == 0) filled_bottom = true;
 
   } else if (sensor == "bottom1") {
     values_bottom1[current_index_bottom1] = value;
-    current_index_bottom1 = (current_index_bottom1 + 1) % window_size;
+    current_index_bottom1 = (current_index_bottom1 + 1) % window_size_ir;
     if (current_index_bottom1 == 0) filled_bottom1 = true;
 
   } else if (sensor == "bottom2") {
     values_bottom2[current_index_bottom2] = value;
-    current_index_bottom2 = (current_index_bottom2 + 1) % window_size;
+    current_index_bottom2 = (current_index_bottom2 + 1) % window_size_ir;
     if (current_index_bottom2 == 0) filled_bottom2 = true;
   }
 
