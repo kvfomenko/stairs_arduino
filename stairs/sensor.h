@@ -22,7 +22,7 @@ float last_start_distance_bottom = 0;
 #define BOTTOM_IR_SENSOR2_PIN A3  //D12
 #define TOP_IR_SENSOR1_PIN A4
 #define TOP_IR_SENSOR2_PIN A5
-float THRESHOLD_VOLTAGE[5] = {0, 0.15, 0.15, 0.25, 0.15};
+float THRESHOLD_VOLTAGE[5] = {0, 0.10, 0.10, 0.35, 0.30};
 float voltage_pin1 = 0;
 float voltage_pin2 = 0;
 float voltage_pin3 = 0;

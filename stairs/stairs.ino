@@ -167,14 +167,14 @@ void tg_loop() {
         } else if (msgText.equalsIgnoreCase("RANGE")) {
           myBot.sendMessage(msg, 
             //"distance\nTOP: " + String((int)distance_top) + "cm\nBOTTOM: " + String((int)distance_bottom) + "cm"
-            "\navgTop:" + String(avg_voltage_pin3) + "V " + String(avg_voltage_pin4) + "V "
-            + "\navgBottom:" + String(avg_voltage_pin1) + "V " + String(avg_voltage_pin2) + "V "
+              "\navgTop:           " + String(avg_voltage_pin3) + "V " + String(avg_voltage_pin4) + "V "
+            + "\navgBottom:   " + String(avg_voltage_pin1) + "V " + String(avg_voltage_pin2) + "V "
             //  + "\n\nLAST_TOP: " + String((int)last_start_distance_top) 
-            + "\nLAST_VOLTAGE:" + String(last_start_voltage_sensor3) + "V " + String(last_start_voltage_sensor4) + "V "
-            + "\nValue:" + String(last_start_value_sensor3)  + "/" + String(last_start_value_sensor4)
+            + "\nlastTop:         " + String(last_start_voltage_sensor3) + "V " + String(last_start_voltage_sensor4) + "V "
+            //+ "\nValue:" + String(last_start_value_sensor3)  + "/" + String(last_start_value_sensor4)
             //+ "\nLAST_BOTTOM: " + String((int)last_start_distance_bottom) 
-            + "\nLAST_VOLTAGE:" + String(last_start_voltage_sensor1) + "V " + String(last_start_voltage_sensor2) + "V "
-            + "\nValue:" + String(last_start_value_sensor1)  + "/" + String(last_start_value_sensor2)
+            + "\nlastBottom: " + String(last_start_voltage_sensor1) + "V " + String(last_start_voltage_sensor2) + "V "
+            //+ "\nValue:" + String(last_start_value_sensor1)  + "/" + String(last_start_value_sensor2)
             + "\n\nLAST_DIRECTION: " + String(last_direction)
             + "\n\n/range_set_top_min " + String(distance_top_min) + "\n/range_set_top_max " + String(distance_top_max) 
             + "\n/range_set_bottom_min " + String(distance_bottom_min) + "\n/range_set_bottom_max " + String(distance_bottom_max)
