@@ -332,8 +332,12 @@ void start_animation() {
     last_start_distance_bottom = distance_bottom;
     last_start_voltage_sensor1 = voltage_pin1;
     last_start_voltage_sensor2 = voltage_pin2;
+    last_start_voltage_sensor3 = 0;
+    last_start_voltage_sensor4 = 0;
     last_start_value_sensor1 = value_pin1;
     last_start_value_sensor2 = value_pin2;
+    last_start_value_sensor3 = 0;
+    last_start_value_sensor4 = 0;
     log("start_animation UP t:" + String((int)last_start_distance_top) + " b:" + String((int)last_start_distance_bottom));
   }
   if (is_start_animation && direction == DOWN) {
@@ -346,8 +350,12 @@ void start_animation() {
     last_start_distance_bottom = 0;
     last_start_voltage_sensor1 = 0;
     last_start_voltage_sensor2 = 0;
+    last_start_voltage_sensor3 = voltage_pin3;
+    last_start_voltage_sensor4 = voltage_pin4;
     last_start_value_sensor1 = 0;
     last_start_value_sensor2 = 0;
+    last_start_value_sensor3 = value_pin3;
+    last_start_value_sensor4 = value_pin4;
     log("start_animation DOWN t:" + String((int)last_start_distance_top) + " b:" + String((int)last_start_distance_bottom));
   }
 

@@ -3,12 +3,9 @@
 
 //mic
 #include "mic.h"
-const int micPin = A0;
-const int micMethod = 1;
 
 //light
 #include "light_sens.h"
-float lux_coef = 5.0;
 
 #define FASTLED_INTERNAL        // Отключаем внутренние конфликты FastLED
 #include <FastLED.h>
@@ -181,8 +178,11 @@ void tg_loop() {
             + "\n\nLAST_DIRECTION: " + String(last_direction)
             + "\n\n/range_set_top_min " + String(distance_top_min) + "\n/range_set_top_max " + String(distance_top_max) 
             + "\n/range_set_bottom_min " + String(distance_bottom_min) + "\n/range_set_bottom_max " + String(distance_bottom_max)
-            + "\n/range_set_threshold_voltage " + String(THRESHOLD_VOLTAGE))
-            ;
+            + "\n/range_set_threshold_voltage1 " + String(THRESHOLD_VOLTAGE[1])
+            + "\n/range_set_threshold_voltage2 " + String(THRESHOLD_VOLTAGE[2])
+            + "\n/range_set_threshold_voltage3 " + String(THRESHOLD_VOLTAGE[3])
+            + "\n/range_set_threshold_voltage4 " + String(THRESHOLD_VOLTAGE[4])
+            );
 
         } else if (msgText.equalsIgnoreCase("HIST")) {
           String hist_top = getHistogram("top");
@@ -207,10 +207,22 @@ void tg_loop() {
             val = msgText.substring(strlen("/range_set_bottom_max"), strlen("/range_set_bottom_max")+4);
             log("set " + msgText + " val:" + val);
             distance_bottom_max = val.toInt();
-          } else if (startsWithIgnoreCase(msgText, "/range_set_threshold_voltage")) {
-            val = msgText.substring(strlen("/range_set_threshold_voltage"), strlen("/range_set_threshold_voltage")+5); // 1.35
+          } else if (startsWithIgnoreCase(msgText, "/range_set_threshold_voltage1")) {
+            val = msgText.substring(strlen("/range_set_threshold_voltage1"), strlen("/range_set_threshold_voltage1")+5); // 1.35
             log("set " + msgText + " val:" + val);
-            THRESHOLD_VOLTAGE = val.toFloat();
+            THRESHOLD_VOLTAGE[1] = val.toFloat();
+          } else if (startsWithIgnoreCase(msgText, "/range_set_threshold_voltage2")) {
+            val = msgText.substring(strlen("/range_set_threshold_voltage2"), strlen("/range_set_threshold_voltage2")+5); // 1.35
+            log("set " + msgText + " val:" + val);
+            THRESHOLD_VOLTAGE[2] = val.toFloat();
+          } else if (startsWithIgnoreCase(msgText, "/range_set_threshold_voltage3")) {
+            val = msgText.substring(strlen("/range_set_threshold_voltage3"), strlen("/range_set_threshold_voltage3")+5); // 1.35
+            log("set " + msgText + " val:" + val);
+            THRESHOLD_VOLTAGE[3] = val.toFloat();
+          } else if (startsWithIgnoreCase(msgText, "/range_set_threshold_voltage4")) {
+            val = msgText.substring(strlen("/range_set_threshold_voltage4"), strlen("/range_set_threshold_voltage4")+5); // 1.35
+            log("set " + msgText + " val:" + val);
+            THRESHOLD_VOLTAGE[4] = val.toFloat();
           }
 
         } else if (msgText.equalsIgnoreCase("MODE")) {
@@ -482,7 +494,7 @@ void sensors_loop() {
       avg_voltage_pin3 = getAvgVal("top1");
       avg_voltage_pin4 = getAvgVal("top2");
 
-      if (avg_voltage_pin3 >= THRESHOLD_VOLTAGE || avg_voltage_pin4 >= THRESHOLD_VOLTAGE) {
+      if (avg_voltage_pin3 >= THRESHOLD_VOLTAGE[3] || avg_voltage_pin4 >= THRESHOLD_VOLTAGE[4]) {
         distance_top = distance_top_min;
       } else {
         distance_top = 0;
@@ -517,14 +529,14 @@ void sensors_loop() {
       avg_voltage_pin2 = getAvgVal("bottom2");
 
       //if (digitalRead(BOTTOM_IR_SENSOR1_PIN) == HIGH || digitalRead(BOTTOM_IR_SENSOR2_PIN) == HIGH) {
-      if (avg_voltage_pin1 >= THRESHOLD_VOLTAGE || avg_voltage_pin2 >= THRESHOLD_VOLTAGE) {
+      if (avg_voltage_pin1 >= THRESHOLD_VOLTAGE[1] || avg_voltage_pin2 >= THRESHOLD_VOLTAGE[2]) {
         distance_bottom = distance_bottom_min;
       } else {
         distance_bottom = 0;
       }
     }
 
-    if (millis() - last_hist_millis >= 20) {
+    if (millis() - last_hist_millis >= 50) {
       last_hist_millis = millis();
       String hist_top = ".";
       String hist_bottom = ".";
@@ -534,10 +546,12 @@ void sensors_loop() {
       if (BOTTOM_SENS == SONIC_SENSOR) {
         hist_bottom = getHistogram("bottom");
       }
-      log("::" + distance_top_bar + " . " + distance_bottom_bar + "  " + hist_top + " " + hist_bottom + "  " + String((int)distance_top) + " / " + String((int)distance_bottom)
-       + " " + voltage_pin1 + " / " + voltage_pin2 + " AVG:" + avg_voltage_pin1 + " / " + avg_voltage_pin2
-       + " " + voltage_pin3 + " / " + voltage_pin4 + " AVG:" + avg_voltage_pin3 + " / " + avg_voltage_pin4
-       );
+
+       //+ distance_top_bar + " . " + distance_bottom_bar + "  " + hist_top + " " + hist_bottom + "  " + String((int)distance_top) + " / " + String((int)distance_bottom)
+       //+ " " + voltage_pin3 + " / " + voltage_pin4 
+       //+ " " + voltage_pin1 + " / " + voltage_pin2 
+
+      log("::  AVGtop:" + String(avg_voltage_pin3) + " / " + String(avg_voltage_pin4) + " AVGbottom:" + String(avg_voltage_pin1) + " / " + String(avg_voltage_pin2));
     }
 
     if (distance_top >= distance_top_min && distance_top <= distance_top_max) {

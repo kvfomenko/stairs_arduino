@@ -22,7 +22,7 @@ float last_start_distance_bottom = 0;
 #define BOTTOM_IR_SENSOR2_PIN A3  //D12
 #define TOP_IR_SENSOR1_PIN A4
 #define TOP_IR_SENSOR2_PIN A5
-float THRESHOLD_VOLTAGE = 0.15;
+float THRESHOLD_VOLTAGE[5] = {0, 0.15, 0.15, 0.25, 0.15};
 float voltage_pin1 = 0;
 float voltage_pin2 = 0;
 float voltage_pin3 = 0;
@@ -64,17 +64,17 @@ float values_bottom2[window_size_ir];
 float values_top1[window_size_ir];
 float values_top2[window_size_ir];
 int current_index_top = 0;
+int current_index_top1 = 0;
+int current_index_top2 = 0;
 int current_index_bottom = 0;
 int current_index_bottom1 = 0;
 int current_index_bottom2 = 0;
-int current_index_top1 = 0;
-int current_index_top2 = 0;
 bool filled_top = false;  // Чтобы знать, когда набрали 100 значений
+bool filled_top1 = false;
+bool filled_top2 = false;
 bool filled_bottom = false;
 bool filled_bottom1 = false;
 bool filled_bottom2 = false;
-bool filled_top1 = false;
-bool filled_top2 = false;
 float track_in_histogram_top_min = 10;
 float track_in_histogram_top_max = 200;
 float track_in_histogram_bottom_min = 10;

@@ -5,6 +5,8 @@ const int LOW_PASS = 100;
 const float SMOOTH = 0.5;         // коэффициент сглаживания (0,01 макс сглаживание....1 нет сглаживания)
 const float SMOOTH_AVER = 0.006;  // коэффициент сглаживания для автогромкости (0,01 макс сглаживание....1 нет сглаживания)
 const int sampleWindow = 20;      // Sample window width in ms (50 ms = 20Hz)
+const int micPin = A0;
+const int micMethod = 1;
 
 int globalMicRawValue = 0;
 int globalMicValue = 0;
