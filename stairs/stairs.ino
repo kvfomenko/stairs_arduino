@@ -55,6 +55,50 @@ int last_hist_millis = millis();
 int last_matrix_millis = millis();
 
 
+void log_matrix(String text) {
+  String text2 = "  " + text + "  ";
+
+  matrix.beginDraw();
+  matrix.textScrollSpeed(40);
+  matrix.textFont(Font_5x7);
+  matrix.beginText(0, 1, 0xFFFFFF);
+  matrix.println(text2.c_str());
+  matrix.endText(SCROLL_LEFT);
+  matrix.endDraw();
+}
+
+void text_matrix(String text) {
+  matrix.beginDraw();
+  matrix.stroke(128);          // макс. яркость = 255
+  matrix.text(text + "   ");
+  matrix.endDraw();
+}
+
+
+void brightness_loop() {
+  lux = get_lux();
+  lux = lux * lux_coef;
+
+  int new_brightness;
+  if (lux > 32) {
+    new_brightness = 255;
+  } else if (lux > 16) {
+    new_brightness = 128;
+  } else if (lux > 8) {
+    new_brightness = 64;
+  } else if (lux > 4) {
+    new_brightness = 32;
+  } else {
+    new_brightness = 16;
+  }
+
+  if (new_brightness != brightness) {
+    brightness = new_brightness;
+    FastLED.setBrightness(brightness);
+    log("brightness:" + String(brightness) + " lux:" + String(lux));
+  }
+}
+
 void tg_setup() {
 
     if (WiFi.status() == WL_NO_MODULE) {
@@ -210,8 +254,9 @@ void tg_loop() {
           } else if (startsWithIgnoreCase(msgText, "/range_set_bottom_max")) {
             val = msgText.substring(strlen("/range_set_bottom_max"), strlen("/range_set_bottom_max")+4);
             log("set " + msgText + " val:" + val);
-            distance_bottom_max = val.toInt();*/
-          } else if (startsWithIgnoreCase(msgText, "/range_set_threshold1")) {
+            distance_bottom_max = val.toInt();
+          } else */
+          if (startsWithIgnoreCase(msgText, "/range_set_threshold1")) {
             val = msgText.substring(strlen("/range_set_threshold1"), strlen("/range_set_threshold1")+5); // 1.35
             log("set " + msgText + " val:" + val);
             THRESHOLD_VOLTAGE[1] = val.toFloat();
@@ -372,7 +417,7 @@ void loop() {
       tg_loop();
     }
 
-    if (work_mode != 4 /*MUSIC*/) {
+    if (work_mode != 4) {
       if (millis() - last_matrix_millis >= FRAME_MS*10) {
         last_matrix_millis = millis();
         text_matrix(String((int)(animation_frame/10)));
@@ -393,48 +438,7 @@ void led_animate_loop() {
     }
 }
 
-void log_matrix(String text) {
-  String text2 = "  " + text + "  ";
 
-  matrix.beginDraw();
-  matrix.textScrollSpeed(40);
-  matrix.textFont(Font_5x7);
-  matrix.beginText(0, 1, 0xFFFFFF);
-  matrix.println(text2.c_str());
-  matrix.endText(SCROLL_LEFT);
-  matrix.endDraw();
-}
-
-void text_matrix(String text) {
-  matrix.beginDraw();
-  matrix.stroke(128);          // макс. яркость = 255
-  matrix.text(text + "   ");
-  matrix.endDraw();
-}
-
-void brightness_loop() {
-  lux = get_lux();
-  lux = lux * lux_coef;
-
-  int new_brightness;
-  if (lux > 32) {
-    new_brightness = 255;
-  } else if (lux > 16) {
-    new_brightness = 128;
-  } else if (lux > 8) {
-    new_brightness = 64;
-  } else if (lux > 4) {
-    new_brightness = 32;
-  } else {
-    new_brightness = 16;
-  }
-
-  if (new_brightness != brightness) {
-    brightness = new_brightness;
-    FastLED.setBrightness(brightness);
-    log("brightness:" + String(brightness) + " lux:" + String(lux));
-  }
-}
 
 // long blocking method
 long measure_echo_time(uint8_t trigPin, uint8_t echoPin) {
