@@ -44,7 +44,7 @@ int values_bottom[window_size_us];
 #define BOTTOM_IR_SENSOR2_PIN A3
 #define TOP_IR_SENSOR1_PIN A1
 #define TOP_IR_SENSOR2_PIN A5
-float THRESHOLD_VOLTAGE[5] = {0, 0.25, 0.25, 0.30, 0.30};
+float THRESHOLD_VOLTAGE[5] = {0, 0.2, 0.2, 0.2, 0.2};
 int value_pin[5] = {0, 0,0,0,0};
 float voltage_pin[5] = {0, 0,0,0,0};
 float avg_voltage_pin[5] = {0, 0,0,0,0};

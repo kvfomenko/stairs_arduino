@@ -460,9 +460,9 @@ void animate_loop() {
     if (animation_mode == 2) {
         //slow ball
         CRGB wave_color1 = main_color1;
-        int seconds = 12;
+        int seconds = 10;
         int rolls_per_sec = 2; // 1,2,4
-        int max_balls = seconds / rolls_per_sec;
+        int max_balls = 10;
         CRGB back_color = calc_back_color();
         //console.log('frames_for_1step',rolls_per_sec, FRAME_MS, frames_for_1step);
 
@@ -474,14 +474,14 @@ void animate_loop() {
 
         //1st ball
         for (int ball_i=0; ball_i<max_balls; ball_i++) {
-            if (check_frames(ball_i * FPS/rolls_per_sec +1, ball_i * FPS/rolls_per_sec +FPS/rolls_per_sec/2 +1,4)) {
+            if (check_frames(ball_i * FPS/rolls_per_sec*2 +1, ball_i * FPS/rolls_per_sec*2 +FPS/rolls_per_sec/2 +1,4)) {
                 draw_step3(first_step, back_color,
                     CRGB(wave_color1[0]/4 + progress*(wave_color1.r-wave_color1.r/4),
                         wave_color1[1]/4 + progress*(wave_color1.g-wave_color1.g/4),
                         wave_color1[2]/4 + progress*(wave_color1.b-wave_color1.b/4)),
                     back_color);
             }
-            if (check_frames(ball_i * FPS/rolls_per_sec +FPS/rolls_per_sec/2 +1, ball_i * FPS/rolls_per_sec +FPS/rolls_per_sec +1,4)) {
+            if (check_frames(ball_i * FPS/rolls_per_sec*2 +FPS/rolls_per_sec/2 +1, ball_i * FPS/rolls_per_sec*2 +FPS/rolls_per_sec +1,4)) {
                 draw_step3(first_step, back_color,
                     CRGB(wave_color1[0]/4 + degress*(wave_color1.r-wave_color1.r/4),
                         wave_color1[1]/4 + degress*(wave_color1.g-wave_color1.g/4),
@@ -721,7 +721,7 @@ void animate_loop() {
         int frames_per_spawn = worm_len * frames_per_step;
         CRGB worm_color = main_color1;
         CRGB back_color = calc_back_color();
-        int max_snakes = 12;
+        int max_snakes = 10;
         max_animation_frame = (max_snakes+1) * frames_per_spawn;
 
         if (animation_frame == 1) {

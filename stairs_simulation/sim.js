@@ -440,7 +440,7 @@ function animate_loop() {
         let wave_color1 = main_color1;
         let seconds = 10;
         let rolls_per_sec = 2; // 1,2,4
-        let max_balls = seconds * rolls_per_sec;
+        let max_balls = 10;
         let back_color = calc_back_color();
         //console.log('frames_for_1step',rolls_per_sec, FRAME_MS, frames_for_1step);
 
@@ -452,14 +452,14 @@ function animate_loop() {
 
         //1st ball
         for (let ball_i=0; ball_i<max_balls; ball_i++) {
-            if (check_frames(ball_i * FPS/rolls_per_sec +1, ball_i * FPS/rolls_per_sec +FPS/rolls_per_sec/2 +1,4)) {
+            if (check_frames(ball_i * FPS/rolls_per_sec*2 +1, ball_i * FPS/rolls_per_sec*2 +FPS/rolls_per_sec/2 +1,4)) {
                 draw_step3(first_step, back_color,
                     CRGB(wave_color1[0]/4 + progress*(wave_color1[0]-wave_color1[0]/4),
                         wave_color1[1]/4 + progress*(wave_color1[1]-wave_color1[1]/4),
                         wave_color1[2]/4 + progress*(wave_color1[2]-wave_color1[2]/4)),
                     back_color);
             }
-            if (check_frames(ball_i * FPS/rolls_per_sec +FPS/rolls_per_sec/2 +1, ball_i * FPS/rolls_per_sec +FPS/rolls_per_sec +1,4)) {
+            if (check_frames(ball_i * FPS/rolls_per_sec*2 +FPS/rolls_per_sec/2 +1, ball_i * FPS/rolls_per_sec*2 +FPS/rolls_per_sec +1,4)) {
                 draw_step3(first_step, back_color,
                     CRGB(wave_color1[0]/4 + degress*(wave_color1[0]-wave_color1[0]/4),
                         wave_color1[1]/4 + degress*(wave_color1[1]-wave_color1[1]/4),
