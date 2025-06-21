@@ -838,7 +838,7 @@ function animate_loop() {
         let frames_per_spawn = worm_len * frames_per_step;
         let worm_color = main_color1;
         let back_color = calc_back_color();
-        let max_snakes = 6;
+        let max_snakes = 8;
         max_animation_frame = (max_snakes+1) * frames_per_spawn;
 
         if (animation_frame === 1) {

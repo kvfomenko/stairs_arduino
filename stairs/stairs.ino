@@ -52,6 +52,7 @@ int last_br_millis = millis();
 int last_mic_millis = millis();
 int last_sensor_millis = millis();
 int last_hist_millis = millis();
+int last_matrix_millis = millis();
 
 
 void tg_setup() {
@@ -193,6 +194,7 @@ void tg_loop() {
 
         } else if (startsWithIgnoreCase(msgText, "/range_set")) {
           String val;
+          /*
           if (startsWithIgnoreCase(msgText, "/range_set_top_min")) {
             val = msgText.substring(strlen("/range_set_top_min"), strlen("/range_set_top_min")+4);
             log("set " + msgText + " val:" + val);
@@ -208,7 +210,7 @@ void tg_loop() {
           } else if (startsWithIgnoreCase(msgText, "/range_set_bottom_max")) {
             val = msgText.substring(strlen("/range_set_bottom_max"), strlen("/range_set_bottom_max")+4);
             log("set " + msgText + " val:" + val);
-            distance_bottom_max = val.toInt();
+            distance_bottom_max = val.toInt();*/
           } else if (startsWithIgnoreCase(msgText, "/range_set_threshold1")) {
             val = msgText.substring(strlen("/range_set_threshold1"), strlen("/range_set_threshold1")+5); // 1.35
             log("set " + msgText + " val:" + val);
@@ -338,10 +340,6 @@ void setup() {
     text_matrix("a" + String(animation_mode));
     //log_matrix("Mode " + animation_mode);
 
-    /*for (int i=0; i<100; i++) {
-      int nc = my_random(minVal, maxVal);
-      log(String(i) + ", " + String(nc));
-    }*/
 }
 
 void loop() {
@@ -374,14 +372,19 @@ void loop() {
       tg_loop();
     }
 
+    if (work_mode != 4 /*MUSIC*/) {
+      if (millis() - last_matrix_millis >= FRAME_MS*10) {
+        last_matrix_millis = millis();
+        text_matrix(String((int)(animation_frame/10)));
+      }
+    }
+
     led_animate_loop(); // also used inside ultrasonic sensor waiting loop
 
 }
 
 void led_animate_loop() {
     if (millis() - last_millis >= FRAME_MS-1) {
-        text_matrix(String((int)(animation_frame/10)));
-
         last_millis = millis();
         if (animation_frame > 0) {
           animate_loop();

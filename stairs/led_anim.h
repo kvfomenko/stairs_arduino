@@ -721,7 +721,7 @@ void animate_loop() {
         int frames_per_spawn = worm_len * frames_per_step;
         CRGB worm_color = main_color1;
         CRGB back_color = calc_back_color();
-        int max_snakes = 10;
+        int max_snakes = 8;
         max_animation_frame = (max_snakes+1) * frames_per_spawn;
 
         if (animation_frame == 1) {
