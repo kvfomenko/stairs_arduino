@@ -429,7 +429,8 @@ function animate_loop() {
         if (check_frames(64,96,4)) {
             fill_step(first_step, CRGB(degress*wave_color2[0], degress*wave_color2[1], degress*wave_color2[2]));
         }
-        if (check_frames(4,128+32,4)) {
+        if (check_frames(4,128+16,4)) {
+            //show_debug(key_frames + ': ' + key_frame + ' >>> ' + Math.round(progress * 100)/100 + ' M:' + max_animation_frame + '  ' + animation_frame);
             move_all();
         }
     }
@@ -437,8 +438,9 @@ function animate_loop() {
     if (animation_mode === 2) {
         //slow ball
         let wave_color1 = main_color1;
-        let seconds = 6;
+        let seconds = 10;
         let rolls_per_sec = 2; // 1,2,4
+        let max_balls = seconds * rolls_per_sec;
         let back_color = calc_back_color();
         //console.log('frames_for_1step',rolls_per_sec, FRAME_MS, frames_for_1step);
 
@@ -449,24 +451,26 @@ function animate_loop() {
         }
 
         //1st ball
-        for (let ball_i=0; ball_i<5; ball_i++) {
-            if (check_frames(ball_i * FPS/rolls_per_sec*2 +1, ball_i * FPS/rolls_per_sec*2 +FPS/rolls_per_sec/2 +1,4)) {
+        for (let ball_i=0; ball_i<max_balls; ball_i++) {
+            if (check_frames(ball_i * FPS/rolls_per_sec +1, ball_i * FPS/rolls_per_sec +FPS/rolls_per_sec/2 +1,4)) {
                 draw_step3(first_step, back_color,
                     CRGB(wave_color1[0]/4 + progress*(wave_color1[0]-wave_color1[0]/4),
                         wave_color1[1]/4 + progress*(wave_color1[1]-wave_color1[1]/4),
                         wave_color1[2]/4 + progress*(wave_color1[2]-wave_color1[2]/4)),
                     back_color);
             }
-            if (check_frames(ball_i * FPS/rolls_per_sec*2 +FPS/rolls_per_sec/2 +1, ball_i * FPS/rolls_per_sec*2 +FPS/rolls_per_sec +1,4)) {
+            if (check_frames(ball_i * FPS/rolls_per_sec +FPS/rolls_per_sec/2 +1, ball_i * FPS/rolls_per_sec +FPS/rolls_per_sec +1,4)) {
                 draw_step3(first_step, back_color,
                     CRGB(wave_color1[0]/4 + degress*(wave_color1[0]-wave_color1[0]/4),
                         wave_color1[1]/4 + degress*(wave_color1[1]-wave_color1[1]/4),
                         wave_color1[2]/4 + degress*(wave_color1[2]-wave_color1[2]/4)),
                     back_color);
+                //show_debug(' >>> ' + ' M:' + max_animation_frame + '  ' + animation_frame);
             }
         }
 
-        if (check_frames(2,seconds*FPS,4)) {
+        if (check_frames(2,(seconds+1) * FPS,4)) {
+            show_debug(' >>> ' + ' M:' + max_animation_frame + '  ' + animation_frame + ' s:' + Math.round(animation_frame/FPS*10)/10);
             move_all();
         }
     }
@@ -553,7 +557,6 @@ function animate_loop() {
             }
         }
     }
-
 
     if (animation_mode === 4) {
         //fast waves
@@ -967,6 +970,8 @@ function animate_loop() {
         }
     }
 
+    show_debug('Max:' + max_animation_frame + '  f:' + animation_frame + '  Sec:' + Math.round(animation_frame/FPS*10)/10);
+
 
     //console.log('key_frames:', key_frames + ': ' + key_frame + ' >>> ' + progress*MAX_ILLUM + ' M:' + max_animation_frame);
     if (animation_frame % 8 === 1) {
@@ -1170,7 +1175,7 @@ function clear_all() {
     }
 }
 function show_debug(debug) {
-    //document.getElementById('debug').innerText = debug;
+    document.getElementById('debug').innerText = debug;
 }
 
 function hslToCRGB(h, s, l) {

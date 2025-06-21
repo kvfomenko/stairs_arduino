@@ -7,7 +7,7 @@ bool LIGHT_SENSOR_ENABLE = false;
 int brightness = 64;
 float lux_default = 4.0;
 float lux = lux_default;  //1..65535
-float lux_coef = 4.0;
+float lux_coef = 16.0;
 // используются пины A4 белый DAT и A5 коричневый SCL
 
 void light_setup() {

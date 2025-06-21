@@ -307,7 +307,7 @@ void clear_all() {
 }
 
 int get_random_color_index() {
-    int next_color_index = random(0, sizeof(colors_list) / sizeof(colors_list[0]));
+    int next_color_index = random(1, sizeof(colors_list) / sizeof(colors_list[0]));
     //Serial.println("next_color_index " + String(next_color_index));
     return next_color_index;
 }
@@ -330,14 +330,14 @@ void start_animation() {
     last_direction = direction;
     last_start_distance_top = 0;
     last_start_distance_bottom = distance_bottom;
-    last_start_voltage_sensor1 = voltage_pin1;
-    last_start_voltage_sensor2 = voltage_pin2;
-    last_start_voltage_sensor3 = 0;
-    last_start_voltage_sensor4 = 0;
-    last_start_value_sensor1 = value_pin1;
-    last_start_value_sensor2 = value_pin2;
-    last_start_value_sensor3 = 0;
-    last_start_value_sensor4 = 0;
+    last_start_voltage_sensor[1] = voltage_pin[1];
+    last_start_voltage_sensor[2] = voltage_pin[2];
+    last_start_voltage_sensor[3] = 0;
+    last_start_voltage_sensor[4] = 0;
+    last_start_value_sensor[1] = value_pin[1];
+    last_start_value_sensor[2] = value_pin[2];
+    last_start_value_sensor[3] = 0;
+    last_start_value_sensor[4] = 0;
     log("start_animation UP t:" + String((int)last_start_distance_top) + " b:" + String((int)last_start_distance_bottom));
   }
   if (is_start_animation && direction == DOWN) {
@@ -348,14 +348,14 @@ void start_animation() {
     last_direction = direction;
     last_start_distance_top = distance_top;
     last_start_distance_bottom = 0;
-    last_start_voltage_sensor1 = 0;
-    last_start_voltage_sensor2 = 0;
-    last_start_voltage_sensor3 = voltage_pin3;
-    last_start_voltage_sensor4 = voltage_pin4;
-    last_start_value_sensor1 = 0;
-    last_start_value_sensor2 = 0;
-    last_start_value_sensor3 = value_pin3;
-    last_start_value_sensor4 = value_pin4;
+    last_start_voltage_sensor[1] = 0;
+    last_start_voltage_sensor[2] = 0;
+    last_start_voltage_sensor[3] = voltage_pin[3];
+    last_start_voltage_sensor[4] = voltage_pin[4];
+    last_start_value_sensor[1] = 0;
+    last_start_value_sensor[2] = 0;
+    last_start_value_sensor[3] = value_pin[3];
+    last_start_value_sensor[4] = value_pin[4];
     log("start_animation DOWN t:" + String((int)last_start_distance_top) + " b:" + String((int)last_start_distance_bottom));
   }
 
@@ -375,9 +375,7 @@ void finish_animation() {
                 next_animation_mode = MODES_FOR_RANDOM[random(0, sizeof(MODES_FOR_RANDOM) / sizeof(MODES_FOR_RANDOM[0]))];
             }
         }
-        animation_mode = next_animation_mode;
-        Serial.print("next animation_mode: ");
-        Serial.println(animation_mode);
+        log("next animation_mode: " + String(animation_mode));
     }
 
     if (rnd_mode == findInIndex("RND-C", rnd_modes) || rnd_mode == findInIndex("RND-M-C", rnd_modes)) {
@@ -420,7 +418,7 @@ void finish_animation() {
 
 
 void animate_loop() {
-    max_animation_frame = 0;
+  max_animation_frame = 0;
 
   if (work_mode != 4 /*MUSIC*/) {
 
@@ -440,7 +438,7 @@ void animate_loop() {
         if (check_frames(64,96,4)) {
             fill_step(first_step, CRGB(degress*wave_color2.r, degress*wave_color2.g, degress*wave_color2.b));
         }
-        if (check_frames(4,128+32,4)) {
+        if (check_frames(4,128+16,4)) {
             move_all();
         }
     }
@@ -448,8 +446,9 @@ void animate_loop() {
     if (animation_mode == 2) {
         //slow ball
         CRGB wave_color1 = main_color1;
-        int seconds = 15;
+        int seconds = 12;
         int rolls_per_sec = 2; // 1,2,4
+        int max_balls = seconds / rolls_per_sec;
         CRGB back_color = calc_back_color();
         //console.log('frames_for_1step',rolls_per_sec, FRAME_MS, frames_for_1step);
 
@@ -460,15 +459,15 @@ void animate_loop() {
         }
 
         //1st ball
-        for (int ball_i=0; ball_i<10; ball_i++) {
-            if (check_frames(ball_i * FPS/rolls_per_sec*2 +1, ball_i * FPS/rolls_per_sec*2 +FPS/rolls_per_sec/2 +1,4)) {
+        for (int ball_i=0; ball_i<max_balls; ball_i++) {
+            if (check_frames(ball_i * FPS/rolls_per_sec +1, ball_i * FPS/rolls_per_sec +FPS/rolls_per_sec/2 +1,4)) {
                 draw_step3(first_step, back_color,
                     CRGB(wave_color1[0]/4 + progress*(wave_color1.r-wave_color1.r/4),
                         wave_color1[1]/4 + progress*(wave_color1.g-wave_color1.g/4),
                         wave_color1[2]/4 + progress*(wave_color1.b-wave_color1.b/4)),
                     back_color);
             }
-            if (check_frames(ball_i * FPS/rolls_per_sec*2 +FPS/rolls_per_sec/2 +1, ball_i * FPS/rolls_per_sec*2 +FPS/rolls_per_sec +1,4)) {
+            if (check_frames(ball_i * FPS/rolls_per_sec +FPS/rolls_per_sec/2 +1, ball_i * FPS/rolls_per_sec +FPS/rolls_per_sec +1,4)) {
                 draw_step3(first_step, back_color,
                     CRGB(wave_color1[0]/4 + degress*(wave_color1.r-wave_color1.r/4),
                         wave_color1[1]/4 + degress*(wave_color1.g-wave_color1.g/4),
@@ -477,7 +476,7 @@ void animate_loop() {
             }
         }
 
-        if (check_frames(2,seconds*FPS,4)) {
+        if (check_frames(2,(seconds+1) * FPS,4)) {
             move_all();
         }
     }
