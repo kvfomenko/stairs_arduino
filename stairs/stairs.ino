@@ -337,6 +337,11 @@ void setup() {
     log_matrix("Hello");
     text_matrix("a" + String(animation_mode));
     //log_matrix("Mode " + animation_mode);
+
+    /*for (int i=0; i<100; i++) {
+      int nc = my_random(minVal, maxVal);
+      log(String(i) + ", " + String(nc));
+    }*/
 }
 
 void loop() {

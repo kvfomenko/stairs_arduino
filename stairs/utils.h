@@ -13,6 +13,10 @@ void log(String message) {
   }
 }
 
+int my_random(int min, int max) {
+    return min + (random() % (max - min + 1));
+}
+
 float fmap(float x, float in_min, float in_max, float out_min, float out_max) {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
@@ -25,10 +29,6 @@ int fmap(int x, int in_min, int in_max, int out_min, int out_max) {
 int intdiv(int a, int b) {
     if (b == 0) return 0;
     return a / b;
-}
-
-int random(int min, int max) {
-    return min + (random() % (max - min + 1));
 }
 
 CRGB hslToCRGB(float h, float s, float l) {
@@ -99,6 +99,10 @@ int findInIndex(const String& msgText, const String (&arr)[N]) {
     if (arr[i] == msgText) return i;
   }
   return 0;
+}
+
+String rgb_to_str(CRGB col) {
+  return String(col.r) + "." + String(col.g) + "." + String(col.b);
 }
 
 /*

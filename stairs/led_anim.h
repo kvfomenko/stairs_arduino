@@ -307,9 +307,16 @@ void clear_all() {
 }
 
 int get_random_color_index() {
-    int next_color_index = random(1, sizeof(colors_list) / sizeof(colors_list[0]));
-    //Serial.println("next_color_index " + String(next_color_index));
-    return next_color_index;
+    int max_index = sizeof(colors_list) / sizeof(colors_list[0]) - 1;
+    int next_index = my_random(1, max_index);
+    return next_index;
+}
+
+int get_random_mode_index() {
+    int max_index = sizeof(MODES_FOR_RANDOM) / sizeof(MODES_FOR_RANDOM[0]) - 1;
+    int next_index = my_random(0, max_index);
+    //int next_animation_mode = MODES_FOR_RANDOM[next_index];
+    return next_index;
 }
 
 CRGB calc_back_color() {
@@ -367,26 +374,33 @@ void finish_animation() {
     clear_all();
 
     if (rnd_mode == findInIndex("RND-M", rnd_modes) || rnd_mode == findInIndex("RND-M-C", rnd_modes)) {
+        //log("next A: " + String(rnd_mode));
         // Смена случайного animation_mode
-        int next_animation_mode = MODES_FOR_RANDOM[random(0, sizeof(MODES_FOR_RANDOM) / sizeof(MODES_FOR_RANDOM[0]))];
+        int next_index = get_random_mode_index();
+        int next_animation_mode = MODES_FOR_RANDOM[next_index];
+        //log("next B: " + String(next_index) + "  " + String(next_animation_mode));
         if (next_animation_mode == animation_mode) {
-            next_animation_mode = MODES_FOR_RANDOM[random(0, sizeof(MODES_FOR_RANDOM) / sizeof(MODES_FOR_RANDOM[0]))];
+            next_index = get_random_mode_index();
+            next_animation_mode = MODES_FOR_RANDOM[next_index];
+            //log("next B: " + String(next_index) + "  " + String(next_animation_mode));
             if (next_animation_mode == animation_mode) {
-                next_animation_mode = MODES_FOR_RANDOM[random(0, sizeof(MODES_FOR_RANDOM) / sizeof(MODES_FOR_RANDOM[0]))];
+                next_index = get_random_mode_index();
+                next_animation_mode = MODES_FOR_RANDOM[next_index];
+                //log("next B: " + String(next_index) + "  " + String(next_animation_mode));
             }
         }
-        log("next animation_mode: " + String(animation_mode));
+        log("next animation_mode: " + String(next_animation_mode));
+        animation_mode = next_animation_mode;
     }
 
     if (rnd_mode == findInIndex("RND-C", rnd_modes) || rnd_mode == findInIndex("RND-M-C", rnd_modes)) {
         // Смена случайного цвета main_color1
         int new_col_index = get_random_color_index();
         CRGB next_main_color1 = colors_list[new_col_index];
-        
+        log("next C: " + String(new_col_index) + "  " + rgb_to_str(next_main_color1));
         if (next_main_color1 == main_color1) {
             new_col_index = get_random_color_index();
             next_main_color1 = colors_list[new_col_index];
-
             if (next_main_color1 == main_color1) {
                 new_col_index = get_random_color_index();
                 next_main_color1 = colors_list[new_col_index];
@@ -398,7 +412,6 @@ void finish_animation() {
         // Смена случайного цвета main_color2
         new_col_index = get_random_color_index();
         main_color2 = colors_list[new_col_index];
-
         if (main_color2 == main_color1) {
             new_col_index = get_random_color_index();
             main_color2 = colors_list[new_col_index];
@@ -409,9 +422,10 @@ void finish_animation() {
         }
         main_color2_txt = colors_txt_list[new_col_index];
 
-        Serial.print("next colors: ");
-        Serial.println(String(main_color1.r) + "." + String(main_color1.g) + "." + String(main_color1.b) );
+        //Serial.print("next colors: ");
+        Serial.print("next colors: " + String(main_color1.r) + "." + String(main_color1.g) + "." + String(main_color1.b) + "   ");
         Serial.println(String(main_color2.r) + "." + String(main_color2.g) + "." + String(main_color2.b) );
+        Serial.println("---------------------------------------------");
     }
   }
 }
@@ -634,11 +648,11 @@ void animate_loop() {
                 int loop_counter = 0; 
                 int d = 0;
                 while (loop_counter <= 50) {
-                    point = random(0, POINTS_PER_STEP - 1);
+                    point = my_random(0, POINTS_PER_STEP - 1);
                     if (direction == UP) {
-                        step = random(0, NUM_STEPS - 1 - worm_max_age / 2);
+                        step = my_random(0, NUM_STEPS - 1 - worm_max_age / 2);
                     } else {
-                        step = random( worm_max_age / 2, NUM_STEPS - 1);
+                        step = my_random( worm_max_age / 2, NUM_STEPS - 1);
                     }
                     int d_min = 99;
                     for (int worm_i = 0; worm_i < wormManager.size(); worm_i++) {
