@@ -40,11 +40,11 @@ int values_bottom[window_size_us];
 
 
 //IR sensor HC-SR501
-#define BOTTOM_IR_SENSOR1_PIN A2  //D11
-#define BOTTOM_IR_SENSOR2_PIN A3  //D12
-#define TOP_IR_SENSOR1_PIN A4
+#define BOTTOM_IR_SENSOR1_PIN A2
+#define BOTTOM_IR_SENSOR2_PIN A3
+#define TOP_IR_SENSOR1_PIN A1
 #define TOP_IR_SENSOR2_PIN A5
-float THRESHOLD_VOLTAGE[5] = {0, 0.25, 0.25, 0.35, 0.30};
+float THRESHOLD_VOLTAGE[5] = {0, 0.25, 0.25, 0.30, 0.30};
 int value_pin[5] = {0, 0,0,0,0};
 float voltage_pin[5] = {0, 0,0,0,0};
 float avg_voltage_pin[5] = {0, 0,0,0,0};
