@@ -415,22 +415,25 @@ function animate_loop() {
 
     if (animation_mode === 1) {
         //slow gradient wave
+        let waves_count = 4;
+        let frames_per_wave = 128;
         let wave_color1 = main_color1;
         let wave_color2 = main_color2;
 
-        if (check_frames(1,32,4)) {
-            fill_step(first_step, CRGB(progress*wave_color1[0], progress*wave_color1[1], progress*wave_color1[2]));
+        for (let wave_i=0; wave_i<waves_count; wave_i++) {
+            if (check_frames( wave_i*frames_per_wave + 1, wave_i*frames_per_wave + 32, 4)) {
+                fill_step(first_step, CRGB(progress * wave_color1[0], progress * wave_color1[1], progress * wave_color1[2]));
+            }
+            if (check_frames(wave_i*frames_per_wave + 32, wave_i*frames_per_wave + 64, 4)) {
+                fill_step(first_step, CRGB(degress * wave_color1[0] + progress * wave_color2[0],
+                    degress * wave_color1[1] + progress * wave_color2[1],
+                    degress * wave_color1[2] + progress * wave_color2[2]));
+            }
+            if (check_frames(wave_i*frames_per_wave + 64, wave_i*frames_per_wave + 96, 4)) {
+                fill_step(first_step, CRGB(degress * wave_color2[0], degress * wave_color2[1], degress * wave_color2[2]));
+            }
         }
-        if (check_frames(32,64,4)) {
-            fill_step(first_step, CRGB(degress*wave_color1[0] + progress*wave_color2[0],
-                                    degress*wave_color1[1] + progress*wave_color2[1],
-                                    degress*wave_color1[2] + progress*wave_color2[2]));
-        }
-        if (check_frames(64,96,4)) {
-            fill_step(first_step, CRGB(degress*wave_color2[0], degress*wave_color2[1], degress*wave_color2[2]));
-        }
-        if (check_frames(4,128+16,4)) {
-            //show_debug(key_frames + ': ' + key_frame + ' >>> ' + Math.round(progress * 100)/100 + ' M:' + max_animation_frame + '  ' + animation_frame);
+        if (check_frames(4, (waves_count-1)*frames_per_wave + 128 + 16, 4)) {
             move_all();
         }
     }
@@ -932,9 +935,9 @@ function animate_loop() {
     }
 
     if (animation_mode === 12) {
-        //sine
+        //arrow
         let arrow_color1 = main_color1;
-        let seconds = 6;
+        let seconds = 12;
         let rolls_per_sec = 64; // 1,2,4
         let back_color = calc_back_color();
 
@@ -948,14 +951,15 @@ function animate_loop() {
         if (check_frames(2,seconds*FPS,4)) {
             move_all();
         }
-        if (check_frames(2,seconds*FPS,4)) {
-            let points = structuredClone(arrow_mask[sine_i]);
 
+        if (check_frames(1,seconds*FPS,4)) {
+            // Создаем локальную копию массива цветов
+            let points = structuredClone(arrow_mask[sine_i]);
             for (let i=0; i<POINTS_PER_STEP; i++) {
                 points[i] = CRGB(
-                    Math.round((points[i][0] * arrow_color1[0])/256),
-                    Math.round((points[i][1] * arrow_color1[1])/256),
-                    Math.round((points[i][2] * arrow_color1[2])/256));
+                    Math.round(points[i][0] * arrow_color1[0] /256),
+                    Math.round(points[i][1] * arrow_color1[1] /256),
+                    Math.round(points[i][2] * arrow_color1[2] /256));
             }
 
             if (direction === UP) {
@@ -964,7 +968,7 @@ function animate_loop() {
                 draw_step(NUM_STEPS-1, points);
             }
             sine_i++;
-            if (sine_i===arrow_mask.length) {
+            if (sine_i===arrow_mask.length) { // Нужно знать длину массива sine_mask
                 sine_i = 0;
             }
         }

@@ -438,21 +438,25 @@ void animate_loop() {
 
     if (animation_mode == 1) {
         //slow gradient wave
+        int waves_count = 4;
+        int frames_per_wave = 128;
         CRGB wave_color1 = main_color1;
         CRGB wave_color2 = main_color2;
 
-        if (check_frames(1,32,4)) {
-            fill_step(first_step, CRGB(progress*wave_color1.r, progress*wave_color1.g, progress*wave_color1.b));
+        for (int wave_i=0; wave_i<waves_count; wave_i++) {
+            if (check_frames(wave_i*frames_per_wave + 1, wave_i*frames_per_wave + 32, 4)) {
+                fill_step(first_step, CRGB(progress*wave_color1.r, progress*wave_color1.g, progress*wave_color1.b));
+            }
+            if (check_frames(wave_i*frames_per_wave + 32, wave_i*frames_per_wave + 64, 4)) {
+                fill_step(first_step, CRGB(degress*wave_color1.r + progress*wave_color2.r,
+                                        degress*wave_color1.g + progress*wave_color2.g,
+                                        degress*wave_color1.b + progress*wave_color2.b));
+            }
+            if (check_frames(wave_i*frames_per_wave + 64, wave_i*frames_per_wave + 96, 4)) {
+                fill_step(first_step, CRGB(degress*wave_color2.r, degress*wave_color2.g, degress*wave_color2.b));
+            }
         }
-        if (check_frames(32,64,4)) {
-            fill_step(first_step, CRGB(degress*wave_color1.r + progress*wave_color2.r,
-                                    degress*wave_color1.g + progress*wave_color2.g,
-                                    degress*wave_color1.b + progress*wave_color2.b));
-        }
-        if (check_frames(64,96,4)) {
-            fill_step(first_step, CRGB(degress*wave_color2.r, degress*wave_color2.g, degress*wave_color2.b));
-        }
-        if (check_frames(4,128+16,4)) {
+        if (check_frames(4, (waves_count-1)*frames_per_wave + 128 + 16, 4)) {
             move_all();
         }
     }
@@ -835,14 +839,14 @@ void animate_loop() {
             move_all();
         }
 
-        if (check_frames(2, seconds * FPS, 4)) {
+        if (check_frames(1, seconds * FPS, 4)) {
             // Создаем локальную копию массива цветов
-            CRGB points[POINTS_PER_STEP];
+            CRGB points[POINTS_PER_STEP] = arrow_mask[sine_i];
             for (int i = 0; i < POINTS_PER_STEP; i++) {
                 points[i] = CRGB(
-                    (arrow_mask[sine_i][i].r * arrow_color1.r) / 256,
-                    (arrow_mask[sine_i][i].g * arrow_color1.g) / 256,
-                    (arrow_mask[sine_i][i].b * arrow_color1.b) / 256
+                    points[i].r * arrow_color1.r / 256,
+                    points[i].g * arrow_color1.g / 256,
+                    points[i].b * arrow_color1.b / 256
                 );
             }
 

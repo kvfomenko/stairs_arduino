@@ -27,6 +27,7 @@
 ArduinoLEDMatrix matrix;
 
 //wifi
+#include "time.h"
 #include "credentials.h"
 #include "WiFiS3.h"
 #include "WiFiSSLClient.h"
@@ -99,7 +100,7 @@ void brightness_loop() {
   }
 }
 
-void tg_setup() {
+void wifi_setup() {
 
     if (WiFi.status() == WL_NO_MODULE) {
       log("WiFi module failed!");
@@ -128,7 +129,9 @@ void tg_setup() {
     }
     Serial.print("IP:");
     Serial.println(WiFi.localIP());
+}
 
+void tg_setup() {
     myBot.setUpdateTime(500);
     myBot.setTelegramToken(token);
 
@@ -170,6 +173,17 @@ void tg_setup() {
     //start_animation();
 }
 
+
+void led_setup() {
+    FastLED.addLeds<WS2811, LED_PIN_1, BRG>(leds, 0,                    POINTS_PER_STEP * 4);
+    FastLED.addLeds<WS2811, LED_PIN_2, BRG>(leds, POINTS_PER_STEP * 4,  POINTS_PER_STEP * 4);
+    FastLED.addLeds<WS2811, LED_PIN_3, BRG>(leds, POINTS_PER_STEP * 8,  POINTS_PER_STEP * 4);
+    FastLED.addLeds<WS2811, LED_PIN_4, BRG>(leds, POINTS_PER_STEP * 12, POINTS_PER_STEP * 4);
+
+    FastLED.setBrightness(brightness);
+    FastLED.clear();
+    FastLED.show();
+}
 
 void tg_loop() {
     //log("in tg_loop");
@@ -366,15 +380,9 @@ void setup() {
     log_setup(PORT_SPEED);
     log("start " + FRAME_MS);
 
-    FastLED.addLeds<WS2811, LED_PIN_1, BRG>(leds, 0,                    POINTS_PER_STEP * 4);
-    FastLED.addLeds<WS2811, LED_PIN_2, BRG>(leds, POINTS_PER_STEP * 4,  POINTS_PER_STEP * 4);
-    FastLED.addLeds<WS2811, LED_PIN_3, BRG>(leds, POINTS_PER_STEP * 8,  POINTS_PER_STEP * 4);
-    FastLED.addLeds<WS2811, LED_PIN_4, BRG>(leds, POINTS_PER_STEP * 12, POINTS_PER_STEP * 4);
-
-    FastLED.setBrightness(brightness);
-    FastLED.clear();
-    FastLED.show();
-
+    led_setup();
+    wifi_setup();
+    time_setup();
     light_setup();
     mic_setup(micPin);
     matrix.begin();
@@ -383,7 +391,6 @@ void setup() {
 
     log_matrix("Hello");
     text_matrix("a" + String(animation_mode));
-    //log_matrix("Mode " + animation_mode);
 
 }
 
@@ -557,28 +564,16 @@ void sensors_loop() {
       //log("::  AVGtop:" + String(avg_voltage_pin[3]) + " / " + String(avg_voltage_pin[4]) + " AVGbottom:" + String(avg_voltage_pin[1]) + " / " + String(avg_voltage_pin[2]));
     }
 
-    if (distance_top >= distance_top_min && distance_top <= distance_top_max) {
-      if (TOP_SENS == SONIC_SENSOR) {
-        distance_top_bar = distanceBar(distance_top);
-      }
-      distance_bottom_bar = distanceBar(0.0);
-      set_direction(DOWN);
-      if (animation_frame == 0) {
+    if (animation_frame == 0) {
+      if (distance_top >= distance_top_min && distance_top <= distance_top_max) {
+        set_direction(DOWN);
+        start_animation();
+      } else if (distance_bottom >= distance_bottom_min && distance_bottom <= distance_bottom_max) {
+        set_direction(UP);
         start_animation();
       }
-    } else if (distance_bottom >= distance_bottom_min && distance_bottom <= distance_bottom_max) {
-      distance_top_bar = distanceBar(0.0);
-      if (BOTTOM_SENS == SONIC_SENSOR) {
-        distance_bottom_bar = distanceBar(distance_bottom);
-      }
-      set_direction(UP);
-      if (animation_frame == 0) {
-        start_animation();
-      }
-    } else {
-      distance_top_bar = distanceBar(0.0);
-      distance_bottom_bar = distanceBar(0.0);
     }
+
   }
 }
 
