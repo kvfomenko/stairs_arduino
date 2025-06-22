@@ -10,7 +10,6 @@ CRGB leds[NUM_STEPS * POINTS_PER_STEP];
 int FPS = 64;
 int FRAME_MS = 1000 / FPS;
 int MODES_FOR_RANDOM[] = {1, 2, 3, 4, 5, 10, 11, 12};
-//int MODES_FOR_MUSIC[] = {6, 7, 8, 9};
 int MAX_ILLUM = 255;
 
 const CRGB Black = CRGB(0,0,0);

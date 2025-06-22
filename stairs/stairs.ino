@@ -152,7 +152,7 @@ void tg_setup() {
     myReplyKbd.addButton("RND-M-C");
     myReplyKbd.addRow();
     myReplyKbd.addButton("RANGE");
-    myReplyKbd.addButton("HIST");
+    //myReplyKbd.addButton("HIST");
     myReplyKbd.addButton("BRIGHTNESS");
     myReplyKbd.addButton("MODE");
     myReplyKbd.addButton("COLORS");
@@ -232,10 +232,8 @@ void tg_loop() {
             + "\navgBottom:   " + String(avg_voltage_pin[1]) + "V " + String(avg_voltage_pin[2]) + "V "
             //  + "\n\nLAST_TOP: " + String((int)last_start_distance_top) 
             + "\nlastTop:         " + String(last_start_voltage_sensor[3]) + "V " + String(last_start_voltage_sensor[4]) + "V "
-            //+ "\nValue:" + String(last_start_value_sensor3)  + "/" + String(last_start_value_sensor4)
             //+ "\nLAST_BOTTOM: " + String((int)last_start_distance_bottom) 
             + "\nlastBottom: " + String(last_start_voltage_sensor[1]) + "V " + String(last_start_voltage_sensor[2]) + "V "
-            //+ "\nValue:" + String(last_start_value_sensor1)  + "/" + String(last_start_value_sensor2)
             + "\n\nLAST_DIRECTION: " + String(last_direction) + "\n"
             //+ "\n\n/range_set_top_min " + String(distance_top_min) + "\n/range_set_top_max " + String(distance_top_max) 
             //+ "\n/range_set_bottom_min " + String(distance_bottom_min) + "\n/range_set_bottom_max " + String(distance_bottom_max)
@@ -244,11 +242,6 @@ void tg_loop() {
             + "\n/range_set_threshold3 " + String(THRESHOLD_VOLTAGE[3])
             + "\n/range_set_threshold4 " + String(THRESHOLD_VOLTAGE[4])
             );
-
-        } else if (msgText.equalsIgnoreCase("HIST")) {
-          String hist_top = getHistogram("top");
-          String hist_bottom = getHistogram("bottom");
-          myBot.sendMessage(msg, "histogram\nTOP:\n" + hist_top + "\n\nBOTTOM:\n" + hist_bottom);
 
         } else if (startsWithIgnoreCase(msgText, "/range_set")) {
           String val;
@@ -287,6 +280,11 @@ void tg_loop() {
             log("set " + msgText + " val:" + val);
             THRESHOLD_VOLTAGE[4] = val.toFloat();
           }
+
+        /*} else if (msgText.equalsIgnoreCase("HIST")) {
+          String hist_top = getHistogram("top");
+          String hist_bottom = getHistogram("bottom");
+          myBot.sendMessage(msg, "histogram\nTOP:\n" + hist_top + "\n\nBOTTOM:\n" + hist_bottom);*/
 
         } else if (msgText.equalsIgnoreCase("MODE")) {
           myBot.sendMessage(msg, "WORK_MODE: " + work_modes[work_mode] + "-" + String(work_mode) 

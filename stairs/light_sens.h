@@ -8,6 +8,8 @@ int brightness = 64;
 float lux_default = 4.0;
 float lux = lux_default;  //1..65535
 float lux_coef = 16.0;
+String night_start_time = "20:00";
+String night_end_time = "07:00";
 // используются пины A4 белый DAT и A5 коричневый SCL
 
 void light_setup() {
