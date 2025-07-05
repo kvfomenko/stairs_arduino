@@ -1,5 +1,9 @@
 
-#define DEBUG_ENABLED true
+#pragma once           // защищает от двойного включения
+#include "my_time.h"
+
+#define DEBUG_ENABLED false
+#define DEBUG_TIME true
 
 void log_setup(int speed) {
   Serial.begin(speed);
@@ -7,7 +11,13 @@ void log_setup(int speed) {
 
 void log(String message) {
   if (DEBUG_ENABLED) {
-    Serial.println(message);
+    unsigned long epoch = get_epoch_time();
+    if (DEBUG_TIME) {
+      String tm = getFormattedDateTime(epoch);
+      Serial.println(tm + "> " + message);
+    } else {
+      Serial.println(message);
+    }
     //log_matrix(message);
     //Serial.println(message);
   }

@@ -26,6 +26,12 @@ canvas.width = WIDTH;
 canvas.height = HEIGHT;
 const SENSOR_TOP = 6;
 const SENSOR_BOTTOM = 5;
+const distance_top_min = 30;
+const distance_top_max = 40;
+const distance_bottom_min = 30;
+const distance_bottom_max = 40;
+let distance_top = 0;
+let distance_bottom = 0;
 
 const EXP = 1.2;                   // степень усиления сигнала (для более "резкой" работы) (по умолчанию 1.4)
 const MAX_COEF = 1.8;              // коэффициент громкости (максимальное равно срднему * этот коэф) (по умолчанию 1.8)
@@ -232,6 +238,7 @@ function run() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 let work_mode = 0;
 let animation_mode = 10;
+let screensaver_mode = 0;
 let main_color1 = Red;
 let main_color2 = Blue;
 
@@ -317,10 +324,12 @@ function loop() {
     if (digitalRead(SENSOR_BOTTOM) == HIGH && animation_frame == 0) {
         direction = UP;
         is_start_animation = true;
+        clear_all();
     }
     if (digitalRead(SENSOR_TOP) == HIGH && animation_frame == 0) {
         direction = DOWN;
         is_start_animation = true;
+        clear_all();
     }
 
     if (is_start_animation && direction == UP) {
@@ -336,13 +345,119 @@ function loop() {
         is_start_animation = false;
     }
 
+    led_animate_loop(); // also used inside ultrasonic sensor waiting loop
+}
+
+function led_animate_loop() {
     if (millis() - last_millis >= FRAME_MS-1) {
         last_millis = millis();
         if (animation_frame > 0) {
-            animate_loop(animation_frame);
+            animate_loop();
             FastLED.show();
         }
     }
+}
+
+
+function sensors_loop() {
+    let duration_top;
+    let duration_bottom;
+
+    if (work_mode == 3 /*SENSORS*/) {
+
+        /*if (TOP_SENS == SONIC_SENSOR) {
+            duration_top = measure_echo_time(TOP_TRIG_PIN, TOP_ECHO_PIN);
+            if (duration_top > 0 && duration_top < TIMEOUT_MCS) {
+                // Расчёт расстояния (343 м/сек) (в см)
+                new_distance_top = duration_top * 343 * 100 / 1000000 / 2;
+                if (new_distance_top > track_in_histogram_top_min && new_distance_top < track_in_histogram_top_max) {
+                    addValueToBuffer("top", new_distance_top);
+                } else {
+                    addValueToBuffer("top", 0);
+                }
+            } else {
+                addValueToBuffer("top", 0);
+            }
+            distance_top = getValFromHistogram("top");
+        } else if (TOP_SENS == IR_SENSOR) {
+            value_pin[3] = analogRead(TOP_IR_SENSOR1_PIN);  // 0–4095
+            value_pin[4] = analogRead(TOP_IR_SENSOR2_PIN);  // 0–4095
+            voltage_pin[3] = get_analog_voltage_from_value(value_pin[3]);
+            voltage_pin[4] = get_analog_voltage_from_value(value_pin[4]);
+
+            addValueToBuffer("top1", voltage_pin[3]);
+            addValueToBuffer("top2", voltage_pin[4]);
+
+            avg_voltage_pin[3] = getAvgVal("top1");
+            avg_voltage_pin[4] = getAvgVal("top2");
+
+            if (avg_voltage_pin[3] >= THRESHOLD_VOLTAGE[3] || avg_voltage_pin[4] >= THRESHOLD_VOLTAGE[4]) {
+                distance_top = distance_top_min;
+            } else {
+                distance_top = 0;
+            }
+        }
+
+        if (BOTTOM_SENS == SONIC_SENSOR) {
+            duration_bottom = measure_echo_time(BOTTOM_TRIG_PIN, BOTTOM_ECHO_PIN);
+            if (duration_bottom > 0 && duration_bottom < TIMEOUT_MCS) {
+                // Расчёт расстояния (343 м/сек) (в см)
+                new_distance_bottom = duration_bottom * 343 * 100 / 1000000 / 2;
+                if (new_distance_bottom > track_in_histogram_bottom_min && new_distance_bottom < track_in_histogram_bottom_max) {
+                    addValueToBuffer("bottom", new_distance_bottom);
+                } else {
+                    addValueToBuffer("bottom", 0);
+                }
+            } else {
+                addValueToBuffer("bottom", 0);
+            }
+            distance_bottom = getValFromHistogram("bottom");
+
+        } else if (BOTTOM_SENS == IR_SENSOR) {
+            value_pin[1] = analogRead(BOTTOM_IR_SENSOR1_PIN);  // 0–4095
+            value_pin[2] = analogRead(BOTTOM_IR_SENSOR2_PIN);  // 0–4095
+            voltage_pin[1] = get_analog_voltage_from_value(value_pin[1]);
+            voltage_pin[2] = get_analog_voltage_from_value(value_pin[2]);
+
+            addValueToBuffer("bottom1", voltage_pin[1]);
+            addValueToBuffer("bottom2", voltage_pin[2]);
+
+            avg_voltage_pin[1] = getAvgVal("bottom1");
+            avg_voltage_pin[2] = getAvgVal("bottom2");
+
+            //if (digitalRead(BOTTOM_IR_SENSOR1_PIN) == HIGH || digitalRead(BOTTOM_IR_SENSOR2_PIN) == HIGH) {
+            if (avg_voltage_pin[1] >= THRESHOLD_VOLTAGE[1] || avg_voltage_pin[2] >= THRESHOLD_VOLTAGE[2]) {
+                distance_bottom = distance_bottom_min;
+            } else {
+                distance_bottom = 0;
+            }
+        }*/
+
+        if (digitalRead(SENSOR_TOP) === HIGH) {
+            distance_top = distance_top_max;
+        }
+        if (digitalRead(SENSOR_BOTTOM) === HIGH) {
+            distance_bottom = distance_bottom_max;
+        }
+
+        if (animation_frame === 0) {
+            if (distance_top >= distance_top_min && distance_top <= distance_top_max) {
+                set_direction(DOWN);
+                start_animation();
+            } else if (distance_bottom >= distance_bottom_min && distance_bottom <= distance_bottom_max) {
+                set_direction(UP);
+                start_animation();
+            }
+        }
+
+    }
+}
+
+function set_direction(new_direction) {
+    direction = new_direction;
+    //Serial.println("direction: " + String(direction));
+    //log("set direction " + String(direction));
+    //log_matrix(String(direction));
 }
 
 function calc_power() {
@@ -363,6 +478,7 @@ function calc_power() {
     //console.log("power:" + power + ' ' + deb);
     return Math.round(power*10)/10;
 }
+
 function scale_power(scale) {
     let led_num;
     for (let step_i = 0; step_i < NUM_STEPS; step_i++) {
@@ -419,18 +535,32 @@ function animate_loop() {
         let frames_per_wave = 128;
         let wave_color1 = main_color1;
         let wave_color2 = main_color2;
+        let back_color = calc_back_color();
+
+        if (animation_frame === 1) {
+            for (let i = 0; i < NUM_STEPS; i++) {
+                fill_step(i, back_color);
+            }
+        }
 
         for (let wave_i=0; wave_i<waves_count; wave_i++) {
             if (check_frames( wave_i*frames_per_wave + 1, wave_i*frames_per_wave + 32, 4)) {
-                fill_step(first_step, CRGB(progress * wave_color1[0], progress * wave_color1[1], progress * wave_color1[2]));
+                fill_step(first_step, CRGB(
+                    degress * back_color[0] + progress * wave_color1[0],
+                    degress * back_color[1] + progress * wave_color1[1],
+                    degress * back_color[2] + progress * wave_color1[2]));
             }
             if (check_frames(wave_i*frames_per_wave + 32, wave_i*frames_per_wave + 64, 4)) {
-                fill_step(first_step, CRGB(degress * wave_color1[0] + progress * wave_color2[0],
+                fill_step(first_step, CRGB(
+                    degress * wave_color1[0] + progress * wave_color2[0],
                     degress * wave_color1[1] + progress * wave_color2[1],
                     degress * wave_color1[2] + progress * wave_color2[2]));
             }
             if (check_frames(wave_i*frames_per_wave + 64, wave_i*frames_per_wave + 96, 4)) {
-                fill_step(first_step, CRGB(degress * wave_color2[0], degress * wave_color2[1], degress * wave_color2[2]));
+                fill_step(first_step, CRGB(
+                    degress * wave_color2[0] + progress * back_color[0],
+                    degress * wave_color2[1] + progress * back_color[1],
+                    degress * wave_color2[2] + progress * back_color[2]));
             }
         }
         if (check_frames(4, (waves_count-1)*frames_per_wave + 128 + 16, 4)) {
@@ -974,6 +1104,32 @@ function animate_loop() {
         }
     }
 
+    if (screensaver_mode === 1) {
+        //screensaver
+        let seconds = 10;
+        let wave_color1 = CRGB(main_color1[0]/2, main_color1[1]/2, main_color1[2]/2);
+        let wave_color2 = CRGB(main_color2[0]/2, main_color2[1]/2, main_color2[2]/2);
+
+        if (check_frames(1,seconds/2*FPS,4)) {
+            for (let i = 0; i < NUM_STEPS; i++) {
+                fill_step(i, CRGB(
+                    degress * wave_color1[0] + progress * wave_color2[0],
+                    degress * wave_color1[1] + progress * wave_color2[1],
+                    degress * wave_color1[2] + progress * wave_color2[2])
+                );
+            }
+        }
+        if (check_frames(seconds/2*FPS,seconds*FPS,4)) {
+            for (let i = 0; i < NUM_STEPS; i++) {
+                fill_step(i, CRGB(
+                    degress * wave_color2[0] + progress * wave_color1[0],
+                    degress * wave_color2[1] + progress * wave_color1[1],
+                    degress * wave_color2[2] + progress * wave_color1[2])
+                );
+            }
+        }
+    }
+
     show_debug('Max:' + max_animation_frame + '  f:' + animation_frame + '  Sec:' + Math.round(animation_frame/FPS*10)/10);
 
 
@@ -992,46 +1148,102 @@ function animate_loop() {
 
     // check animation finish
     animation_frame++;
-    if (animation_frame > max_animation_frame && !MODES_FOR_MUSIC.includes(animation_mode)) {
+    if (animation_frame > max_animation_frame
+        && !MODES_FOR_MUSIC.includes(animation_mode)
+        && !(screensaver_mode > 0)) {
         finish_animation();
+
+    } else if (screensaver_mode > 0) {
+        animation_frame = 0;
     }
 
 }
 
-function finish_animation() {
-    animation_frame = 0;
+function start_animation() {
+    is_start_animation = true;
     clear_all();
-    if (work_mode === 2 || work_mode === 4) {
-        //change next random animation_mode
-        let next_animation_mode = MODES_FOR_RANDOM[Math.floor(Math.random() * MODES_FOR_RANDOM.length)];
-        if (next_animation_mode === animation_mode) {
-            next_animation_mode = MODES_FOR_RANDOM[Math.floor(Math.random() * MODES_FOR_RANDOM.length)];
+
+    if (is_start_animation && direction == UP) {
+        animation_frame = 1;
+        first_step = 0;
+        last_step = NUM_STEPS - 1;
+        is_start_animation = false;
+        /*
+        last_direction = direction;
+        last_start_distance_top = 0;
+        last_start_distance_bottom = distance_bottom;
+        last_start_voltage_sensor[1] = voltage_pin[1];
+        last_start_voltage_sensor[2] = voltage_pin[2];
+        last_start_voltage_sensor[3] = 0;
+        last_start_voltage_sensor[4] = 0;
+        last_start_value_sensor[1] = value_pin[1];
+        last_start_value_sensor[2] = value_pin[2];
+        last_start_value_sensor[3] = 0;
+        last_start_value_sensor[4] = 0;
+        log("start_animation UP t:" + String((int)last_start_distance_top) + " b:" + String((int)last_start_distance_bottom));
+        */
+    }
+    if (is_start_animation && direction == DOWN) {
+        animation_frame = 1;
+        first_step = NUM_STEPS - 1;
+        last_step = 0;
+        is_start_animation = false;
+        /*
+        last_direction = direction;
+        last_start_distance_top = distance_top;
+        last_start_distance_bottom = 0;
+        last_start_voltage_sensor[1] = 0;
+        last_start_voltage_sensor[2] = 0;
+        last_start_voltage_sensor[3] = voltage_pin[3];
+        last_start_voltage_sensor[4] = voltage_pin[4];
+        last_start_value_sensor[1] = 0;
+        last_start_value_sensor[2] = 0;
+        last_start_value_sensor[3] = value_pin[3];
+        last_start_value_sensor[4] = value_pin[4];
+        console.log("start_animation DOWN t:" + String((int)last_start_distance_top) + " b:" + String((int)last_start_distance_bottom));
+        */
+    }
+
+}
+
+
+function finish_animation() {
+    if (animation_frame > 0) {
+        animation_frame = 0;
+        clear_all();
+
+        if (work_mode === 2 || work_mode === 4) {
+            //change next random animation_mode
+            let next_animation_mode = MODES_FOR_RANDOM[Math.floor(Math.random() * MODES_FOR_RANDOM.length)];
             if (next_animation_mode === animation_mode) {
                 next_animation_mode = MODES_FOR_RANDOM[Math.floor(Math.random() * MODES_FOR_RANDOM.length)];
+                if (next_animation_mode === animation_mode) {
+                    next_animation_mode = MODES_FOR_RANDOM[Math.floor(Math.random() * MODES_FOR_RANDOM.length)];
+                }
             }
+            animation_mode = next_animation_mode;
+            console.log('next animation_mode', animation_mode);
         }
-        animation_mode = next_animation_mode;
-        console.log('next animation_mode', animation_mode);
-    }
-    if (work_mode === 3 || work_mode === 4) {
-        //change next random color
-        let next_main_color1 = colors_list[Math.floor(Math.random() * colors_list.length)];
-        if (next_main_color1 === main_color1) {
-            next_main_color1 = colors_list[Math.floor(Math.random() * colors_list.length)];
+        if (work_mode === 3 || work_mode === 4) {
+            //change next random color
+            let next_main_color1 = colors_list[Math.floor(Math.random() * colors_list.length)];
             if (next_main_color1 === main_color1) {
                 next_main_color1 = colors_list[Math.floor(Math.random() * colors_list.length)];
+                if (next_main_color1 === main_color1) {
+                    next_main_color1 = colors_list[Math.floor(Math.random() * colors_list.length)];
+                }
             }
-        }
-        main_color1 = next_main_color1;
+            main_color1 = next_main_color1;
 
-        main_color2 = colors_list[Math.floor(Math.random() * colors_list.length)];
-        if (main_color2 === main_color1) {
             main_color2 = colors_list[Math.floor(Math.random() * colors_list.length)];
             if (main_color2 === main_color1) {
                 main_color2 = colors_list[Math.floor(Math.random() * colors_list.length)];
+                if (main_color2 === main_color1) {
+                    main_color2 = colors_list[Math.floor(Math.random() * colors_list.length)];
+                }
             }
+            console.log('next colors', main_color1, main_color2);
         }
-        console.log('next colors', main_color1, main_color2);
     }
 }
 

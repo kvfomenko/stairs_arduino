@@ -35,6 +35,7 @@ int work_mode = findInIndex("SENSORS", work_modes);
 const String rnd_modes[] = {"RND-OFF", "RND-M", "RND-C", "RND-M-C"};
 int rnd_mode = findInIndex("RND-M-C", rnd_modes);
 int animation_mode = 12;
+int screensaver_mode = 0;
 int music_mode = 4;
 CRGB main_color1 = Red;
 CRGB main_color2 = Blue;
@@ -45,6 +46,8 @@ int UP = 1;
 int DOWN = -1;
 int direction = UP;
 int last_direction = 0;
+int next_direction = 0;
+float track_sensors_during_animation_after = 3.0; // seconds
 bool is_start_animation = false;
 int animation_frame = 0;
 int max_animation_frame = 0;
@@ -145,6 +148,10 @@ void set_direction(int new_direction) {
   //Serial.println("direction: " + String(direction));
   //log("set direction " + String(direction));
   //log_matrix(String(direction));
+}
+
+void set_next_direction(int new_direction) {
+  next_direction = new_direction;
 }
 
 int calc_distance(int step1, int point1, int step2, int point2) {
@@ -327,6 +334,7 @@ CRGB calc_back_color() {
 
 void start_animation() {
   is_start_animation = true;
+  clear_all();
 
   if (is_start_animation && direction == UP) {
     animation_frame = 1;
@@ -370,6 +378,7 @@ void start_animation() {
 void finish_animation() {
   if (animation_frame > 0) {
     animation_frame = 0;
+
     clear_all();
 
     if (rnd_mode == findInIndex("RND-M", rnd_modes) || rnd_mode == findInIndex("RND-M-C", rnd_modes)) {
@@ -437,7 +446,7 @@ void animate_loop() {
 
     if (animation_mode == 1) {
         //slow gradient wave
-        int waves_count = 4;
+        int waves_count = 5;
         int frames_per_wave = 128;
         CRGB wave_color1 = main_color1;
         CRGB wave_color2 = main_color2;
@@ -463,9 +472,9 @@ void animate_loop() {
     if (animation_mode == 2) {
         //slow ball
         CRGB wave_color1 = main_color1;
-        int seconds = 10;
+        int seconds = 14;
         int rolls_per_sec = 2; // 1,2,4
-        int max_balls = 10;
+        int max_balls = 14;
         CRGB back_color = calc_back_color();
         //console.log('frames_for_1step',rolls_per_sec, FRAME_MS, frames_for_1step);
 
@@ -504,7 +513,7 @@ void animate_loop() {
         CRGB wave_color1 = main_color1;
         CRGB back_color = Black; //calc_back_color();
         int speedon = 16;
-        int speedoff = 32;
+        int speedoff = 64;
 
         if (animation_frame == 1) {
             for (int i = 0; i < NUM_STEPS; i++) {
@@ -584,7 +593,7 @@ void animate_loop() {
     if (animation_mode == 4) {
         //fast waves
         CRGB wave_color1 = main_color1;
-        int seconds = 12;
+        int seconds = 14;
         int rolls_per_sec = 2; // 1,2,4
         CRGB back_color = calc_back_color();
         int frames_for_1step = FPS / rolls_per_sec / NUM_STEPS;
@@ -625,7 +634,7 @@ void animate_loop() {
 
     if (animation_mode == 5) {
         //worms
-        int seconds = 12;
+        int seconds = 14;
         max_animation_frame = seconds*FPS;
         int frames_per_step = 3;
         int worm_len = 3;
@@ -724,7 +733,7 @@ void animate_loop() {
         int frames_per_spawn = worm_len * frames_per_step;
         CRGB worm_color = main_color1;
         CRGB back_color = calc_back_color();
-        int max_snakes = 8;
+        int max_snakes = 10;
         max_animation_frame = (max_snakes+1) * frames_per_spawn;
 
         if (animation_frame == 1) {
@@ -781,7 +790,7 @@ void animate_loop() {
     if (animation_mode == 11) {
         // sine
         CRGB wave_color1 = main_color1;
-        const int seconds = 12;
+        const int seconds = 14;
         const int rolls_per_sec = 64; // 1,2,4
         CRGB back_color = calc_back_color();
 
@@ -823,7 +832,7 @@ void animate_loop() {
     if (animation_mode == 12) {
         //arrow
         CRGB arrow_color1 = main_color1;
-        const int seconds = 12;
+        const int seconds = 14;
         const int rolls_per_sec = 64; // 1,2,4
         CRGB back_color = calc_back_color();
 
@@ -945,7 +954,7 @@ void animate_loop() {
         main_color = CRGB(main_color.r/1.5, main_color.g/1.5, main_color.b/1.5);
         CRGB back_color = Black; //calc_back_color();
         CRGB pic_color = main_color2;
-        boolean use_pick = false;
+        boolean use_pick = true;
 
         // Преобразуем значение от 0-100 в диапазон от 0-9
         //int fill_steps = ((globalMicValue / 100) * POINTS_PER_STEP) - 1;
@@ -1023,10 +1032,16 @@ void animate_loop() {
     // check animation finish
     animation_frame++;
     if (animation_frame > max_animation_frame && work_mode != 4/*MUSIC*/) {
-        finish_animation();
-        if (work_mode == 1 /*ALWAYS-ON*/) {
-            direction = -direction;
-            start_animation();
+        if (next_direction != 0) { // if detected any move during animation
+            direction = next_direction;
+            next_direction = 0;
+            animation_frame = 1; //restart animation
+        } else {
+            finish_animation();
+            if (work_mode == 1 /*ALWAYS-ON*/) {
+                direction = -direction;
+                start_animation();
+            }
         }
     }
 

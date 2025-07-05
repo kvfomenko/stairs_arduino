@@ -4,12 +4,15 @@
 BH1750 lightMeter;
 
 bool LIGHT_SENSOR_ENABLE = false;
-int brightness = 64;
+int brightness = 255;
+int DAY_BRIGHTNESS = 255;
+int NIGHT_BRIGHTNESS = 128;
+
 float lux_default = 4.0;
 float lux = lux_default;  //1..65535
 float lux_coef = 16.0;
-String night_start_time = "20:00";
-String night_end_time = "07:00";
+//String night_start_time = "20:00";
+//String night_end_time = "07:00";
 // используются пины A4 белый DAT и A5 коричневый SCL
 
 void light_setup() {

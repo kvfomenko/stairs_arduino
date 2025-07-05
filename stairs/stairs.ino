@@ -1,5 +1,8 @@
+#pragma once           // защищает от двойного включения
 
 #define PORT_SPEED 250000 //115200
+
+#include "my_settings.h"
 
 //mic
 #include "mic.h"
@@ -25,9 +28,9 @@
 #define LED_PIN_4  D4
 
 ArduinoLEDMatrix matrix;
+#define SHOW_EACH_FRAME 10
 
 //wifi
-#include "time.h"
 #include "credentials.h"
 #include "WiFiS3.h"
 #include "WiFiSSLClient.h"
@@ -77,20 +80,31 @@ void text_matrix(String text) {
 
 
 void brightness_loop() {
-  lux = get_lux();
-  lux = lux * lux_coef;
-
   int new_brightness;
-  if (lux > 32) {
-    new_brightness = 255;
-  } else if (lux > 16) {
-    new_brightness = 128;
-  } else if (lux > 8) {
-    new_brightness = 64;
-  } else if (lux > 4) {
-    new_brightness = 32;
+  if (LIGHT_SENSOR_ENABLE) {
+
+    lux = get_lux();
+    lux = lux * lux_coef;
+
+    if (lux > 32) {
+      new_brightness = 255;
+    } else if (lux > 16) {
+      new_brightness = 128;
+    } else if (lux > 8) {
+      new_brightness = 64;
+    } else if (lux > 4) {
+      new_brightness = 32;
+    } else {
+      new_brightness = 16;
+    }
+
   } else {
-    new_brightness = 16;
+    long epoh = get_epoch_time();
+    if (is_day_now(epoh)) {
+      new_brightness = DAY_BRIGHTNESS;
+    } else {
+      new_brightness = NIGHT_BRIGHTNESS;
+    }
   }
 
   if (new_brightness != brightness) {
@@ -152,13 +166,13 @@ void tg_setup() {
     myReplyKbd.addButton("RND-M-C");
     myReplyKbd.addRow();
     myReplyKbd.addButton("RANGE");
-    //myReplyKbd.addButton("HIST");
     myReplyKbd.addButton("BRIGHTNESS");
     myReplyKbd.addButton("MODE");
     myReplyKbd.addButton("COLORS");
     myReplyKbd.addRow();
     myReplyKbd.addButton("TOP");
     myReplyKbd.addButton("BOTTOM");
+
     myReplyKbd.enableResize();
 
     delay(1000); //Pause before clearing messages
@@ -186,7 +200,7 @@ void led_setup() {
 }
 
 void tg_loop() {
-    //log("in tg_loop");
+    log("in tg_loop");
     myBot.setUpdateTime(tg_loop_interval);
 
     while (myBot.getNewMessage(msg)) {
@@ -217,35 +231,67 @@ void tg_loop() {
           start_animation();
 
         } else if (msgText.equalsIgnoreCase("BRIGHTNESS")) {
+          long epoch = get_epoch_time();
+          String dt = getFormattedDateTime(epoch);
           brightness_loop();
-          myBot.sendMessage(msg, "brightness\nLEVEL: " + String(brightness) + "\nLUX: " + String(lux) + "\n/lux_coef_set " + String(lux_coef));
-          
-        } else if (startsWithIgnoreCase(msgText, "/lux_coef_set")) {
+          myBot.sendMessage(msg, "brightness: " + String(brightness) // + "\nLUX: " + String(lux) + "\n/lux_coef_set " + String(lux_coef)
+          + "\ndatetime:" + dt + " " + timezone_offset + "TZ"
+          + "\nday: " + hoursToString(sunrise + timezone_offset) + "..." + hoursToString(sunset + timezone_offset)
+          + "\n/day_brightness " + DAY_BRIGHTNESS
+          + "\n/night_brightness " + NIGHT_BRIGHTNESS
+          );
+
+        } else if (startsWithIgnoreCase(msgText, "/day_brightness")) {
+          DAY_BRIGHTNESS = msgText.substring(strlen("/day_brightness"), strlen("/day_brightness")+4).toInt();
+          long epoch = get_epoch_time();
+          String dt = getFormattedDateTime(epoch);
+          brightness_loop();
+          myBot.sendMessage(msg, "brightness: " + String(brightness) // + "\nLUX: " + String(lux) + "\n/lux_coef_set " + String(lux_coef)
+          + "\ndatetime:" + dt + " " + timezone_offset + "TZ"
+          + "\nday: " + hoursToString(sunrise + timezone_offset) + "..." + hoursToString(sunset + timezone_offset)
+          + "\n/day_brightness " + DAY_BRIGHTNESS
+          + "\n/night_brightness " + NIGHT_BRIGHTNESS
+          );
+        } else if (startsWithIgnoreCase(msgText, "/night_brightness")) {
+          NIGHT_BRIGHTNESS = msgText.substring(strlen("/night_brightness"), strlen("/night_brightness")+4).toInt();
+          long epoch = get_epoch_time();
+          String dt = getFormattedDateTime(epoch);
+          brightness_loop();
+          myBot.sendMessage(msg, "brightness: " + String(brightness) // + "\nLUX: " + String(lux) + "\n/lux_coef_set " + String(lux_coef)
+          + "\ndatetime:" + dt + " " + timezone_offset + "TZ"
+          + "\nday: " + hoursToString(sunrise + timezone_offset) + "..." + hoursToString(sunset + timezone_offset)
+          + "\n/day_brightness " + DAY_BRIGHTNESS
+          + "\n/night_brightness " + NIGHT_BRIGHTNESS
+          );
+         
+        /*} else if (startsWithIgnoreCase(msgText, "/lux_coef_set")) {
           lux_coef = msgText.substring(strlen("/lux_coef_set"), strlen("/lux_coef_set")+4).toFloat();
           brightness_loop();
-          myBot.sendMessage(msg, "brightness\nLEVEL: " + String(brightness) + "\nLUX: " + String(lux) + "\n/lux_coef_set " + String(lux_coef));
+          myBot.sendMessage(msg, "brightness\nLEVEL: " + String(brightness) + "\nLUX: " + String(lux) + "\n/lux_coef_set " + String(lux_coef));*/
 
         } else if (msgText.equalsIgnoreCase("RANGE")) {
           myBot.sendMessage(msg, 
-            //"distance\nTOP: " + String((int)distance_top) + "cm\nBOTTOM: " + String((int)distance_bottom) + "cm"
-              "\navgTop:           " + String(avg_voltage_pin[3]) + "V " + String(avg_voltage_pin[4]) + "V "
-            + "\navgBottom:   " + String(avg_voltage_pin[1]) + "V " + String(avg_voltage_pin[2]) + "V "
-            //  + "\n\nLAST_TOP: " + String((int)last_start_distance_top) 
+            "avgTop:           " + String(avg_voltage_pin[3]) + "V " + String(avg_voltage_pin[4]) + "V "
             + "\nlastTop:         " + String(last_start_voltage_sensor[3]) + "V " + String(last_start_voltage_sensor[4]) + "V "
-            //+ "\nLAST_BOTTOM: " + String((int)last_start_distance_bottom) 
-            + "\nlastBottom: " + String(last_start_voltage_sensor[1]) + "V " + String(last_start_voltage_sensor[2]) + "V "
-            + "\n\nLAST_DIRECTION: " + String(last_direction) + "\n"
-            //+ "\n\n/range_set_top_min " + String(distance_top_min) + "\n/range_set_top_max " + String(distance_top_max) 
-            //+ "\n/range_set_bottom_min " + String(distance_bottom_min) + "\n/range_set_bottom_max " + String(distance_bottom_max)
-            + "\n/range_set_threshold1 " + String(THRESHOLD_VOLTAGE[1])
-            + "\n/range_set_threshold2 " + String(THRESHOLD_VOLTAGE[2])
             + "\n/range_set_threshold3 " + String(THRESHOLD_VOLTAGE[3])
             + "\n/range_set_threshold4 " + String(THRESHOLD_VOLTAGE[4])
+            + "\n\navgBottom:   " + String(avg_voltage_pin[1]) + "V " + String(avg_voltage_pin[2]) + "V "
+            + "\nlastBottom: " + String(last_start_voltage_sensor[1]) + "V " + String(last_start_voltage_sensor[2]) + "V "
+            + "\n/range_set_threshold1 " + String(THRESHOLD_VOLTAGE[1])
+            + "\n/range_set_threshold2 " + String(THRESHOLD_VOLTAGE[2])
+            + "\n\ndistance_top:    " + String(distance_top) + "\ndistance_bottom: " + String(distance_bottom)
+            + "\n\nLAST_DIRECTION: " + String(last_direction) + "\nNEXT_DIRECTION: " + String(next_direction)
+            + "\n\n/track_sensors_during_animation_after " + String(track_sensors_during_animation_after)
             );
 
-        } else if (startsWithIgnoreCase(msgText, "/range_set")) {
+        } else if (startsWithIgnoreCase(msgText, "/track_sensors_during_animation_after")) {
+          String val = msgText.substring(strlen("/track_sensors_during_animation_after"), strlen("/track_sensors_during_animation_after")+4);
+          log("set " + msgText + " val:" + val);
+          track_sensors_during_animation_after = val.toInt();
+
+        /*} else if (startsWithIgnoreCase(msgText, "/range_set")) {
           String val;
-          /*
+          
           if (startsWithIgnoreCase(msgText, "/range_set_top_min")) {
             val = msgText.substring(strlen("/range_set_top_min"), strlen("/range_set_top_min")+4);
             log("set " + msgText + " val:" + val);
@@ -291,7 +337,8 @@ void tg_loop() {
           + "\nRND_MODE: " + rnd_modes[rnd_mode] + "-" + String(rnd_mode) 
           + "\nANIMATION_MODE: " + String(animation_mode) 
           + "\nMUSIC_MODE: " + String(music_mode)
-          + "\nAnimation_frame: " + String(animation_frame));
+          //+ "\nAnimation_frame: " + String(animation_frame)
+          );
 
         } else if (msgText.equalsIgnoreCase("RND-OFF") || msgText.equalsIgnoreCase("RND-M") || msgText.equalsIgnoreCase("RND-C") || msgText.equalsIgnoreCase("RND-M-C")) {
           rnd_mode = findInIndex(msgText, rnd_modes);
@@ -300,10 +347,11 @@ void tg_loop() {
         } else if (msgText.equalsIgnoreCase("ALWAYS-OFF") || msgText.equalsIgnoreCase("ALWAYS-ON") || msgText.equalsIgnoreCase("NIGHT-ON") || msgText.equalsIgnoreCase("SENSORS") || msgText.equalsIgnoreCase("MUSIC")) {
           work_mode = findInIndex(msgText, work_modes);
           log("set work_mode " + String(work_mode));
-          clear_all();
           if (msgText.equalsIgnoreCase("ALWAYS-ON") || msgText.equalsIgnoreCase("MUSIC")) {
             start_animation();
           } else {
+            clear_all();
+            FastLED.show();
             is_start_animation = false;
             finish_animation();
           }
@@ -403,13 +451,13 @@ void loop() {
       tg_loop_interval = 20000;
     } else {
       if (animation_frame == 0) {
-        tg_loop_interval = 200;
-        if (millis() - last_br_millis >= 2*1000) {
+        tg_loop_interval = 500;
+        if (millis() - last_br_millis >= 60*1000) {
           last_br_millis = millis();
           brightness_loop();
         }
       } else {
-        tg_loop_interval = 20000;
+        tg_loop_interval = 5 * 1000;
       }
       if (millis() - last_sensor_millis >= 10) {
         last_sensor_millis = millis();
@@ -417,20 +465,19 @@ void loop() {
       }
     }
 
-    if (millis() - last_tg_millis >= tg_loop_interval) {
-      last_tg_millis = millis();
-      tg_loop();
-    }
-
     if (work_mode != 4) {
-      if (millis() - last_matrix_millis >= FRAME_MS*10) {
+      if (millis() - last_matrix_millis >= FRAME_MS*SHOW_EACH_FRAME) {
         last_matrix_millis = millis();
-        text_matrix(String((int)(animation_frame/10)));
+        text_matrix(String((int)(animation_frame/SHOW_EACH_FRAME)));
       }
     }
 
     led_animate_loop(); // also used inside ultrasonic sensor waiting loop
 
+    if (millis() - last_tg_millis >= tg_loop_interval) {
+      last_tg_millis = millis();
+      tg_loop();
+    }
 }
 
 void led_animate_loop() {
@@ -476,7 +523,7 @@ void sensors_loop() {
 
   if (work_mode == 3 /*SENSORS*/) {
 
-    if (TOP_SENS == SONIC_SENSOR) {
+    /*if (TOP_SENS == SONIC_SENSOR) {
       duration_top = measure_echo_time(TOP_TRIG_PIN, TOP_ECHO_PIN);
       if (duration_top > 0 && duration_top < TIMEOUT_MCS) {
         // Расчёт расстояния (343 м/сек) (в см)
@@ -490,7 +537,7 @@ void sensors_loop() {
         addValueToBuffer("top", 0);
       }
       distance_top = getValFromHistogram("top");
-    } else if (TOP_SENS == IR_SENSOR) {
+    } else if (TOP_SENS == IR_SENSOR) {*/
       value_pin[3] = analogRead(TOP_IR_SENSOR1_PIN);  // 0–4095
       value_pin[4] = analogRead(TOP_IR_SENSOR2_PIN);  // 0–4095
       voltage_pin[3] = get_analog_voltage_from_value(value_pin[3]);
@@ -507,9 +554,9 @@ void sensors_loop() {
       } else {
         distance_top = 0;
       }
-    }
+    //}
 
-    if (BOTTOM_SENS == SONIC_SENSOR) {
+    /*if (BOTTOM_SENS == SONIC_SENSOR) {
       duration_bottom = measure_echo_time(BOTTOM_TRIG_PIN, BOTTOM_ECHO_PIN);
       if (duration_bottom > 0 && duration_bottom < TIMEOUT_MCS) {
         // Расчёт расстояния (343 м/сек) (в см)
@@ -523,8 +570,7 @@ void sensors_loop() {
         addValueToBuffer("bottom", 0);
       }
       distance_bottom = getValFromHistogram("bottom");
-
-    } else if (BOTTOM_SENS == IR_SENSOR) {
+    } else if (BOTTOM_SENS == IR_SENSOR) {*/
       value_pin[1] = analogRead(BOTTOM_IR_SENSOR1_PIN);  // 0–4095
       value_pin[2] = analogRead(BOTTOM_IR_SENSOR2_PIN);  // 0–4095
       voltage_pin[1] = get_analog_voltage_from_value(value_pin[1]);
@@ -542,9 +588,9 @@ void sensors_loop() {
       } else {
         distance_bottom = 0;
       }
-    }
+    //}
 
-    if (millis() - last_hist_millis >= 50) {
+    /*if (millis() - last_hist_millis >= 50) {
       last_hist_millis = millis();
       String hist_top = ".";
       String hist_bottom = ".";
@@ -555,12 +601,8 @@ void sensors_loop() {
         hist_bottom = getHistogram("bottom");
       }
 
-       //+ distance_top_bar + " . " + distance_bottom_bar + "  " + hist_top + " " + hist_bottom + "  " + String((int)distance_top) + " / " + String((int)distance_bottom)
-       //+ " " + voltage_pin3 + " / " + voltage_pin4 
-       //+ " " + voltage_pin1 + " / " + voltage_pin2 
-
-      //log("::  AVGtop:" + String(avg_voltage_pin[3]) + " / " + String(avg_voltage_pin[4]) + " AVGbottom:" + String(avg_voltage_pin[1]) + " / " + String(avg_voltage_pin[2]));
-    }
+      log("::  AVGtop:" + String(avg_voltage_pin[3]) + " / " + String(avg_voltage_pin[4]) + " AVGbottom:" + String(avg_voltage_pin[1]) + " / " + String(avg_voltage_pin[2]));
+    }*/
 
     if (animation_frame == 0) {
       if (distance_top >= distance_top_min && distance_top <= distance_top_max) {
@@ -569,6 +611,12 @@ void sensors_loop() {
       } else if (distance_bottom >= distance_bottom_min && distance_bottom <= distance_bottom_max) {
         set_direction(UP);
         start_animation();
+      }
+    } else if (animation_frame >= track_sensors_during_animation_after * FPS) {
+      if (distance_top >= distance_top_min && distance_top <= distance_top_max) {
+        set_next_direction(DOWN);
+      } else if (distance_bottom >= distance_bottom_min && distance_bottom <= distance_bottom_max) {
+        set_next_direction(UP);
       }
     }
 
