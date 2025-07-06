@@ -46,7 +46,6 @@ int UP = 1;
 int DOWN = -1;
 int direction = UP;
 int last_direction = 0;
-//int next_direction = 0;
 float track_sensors_during_animation_after = 4.0; // seconds
 bool is_start_animation = false;
 int animation_frame = 0;

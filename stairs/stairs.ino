@@ -213,6 +213,11 @@ void tg_loop() {
       //Serial.println(msg.sender.id);  // <<< Это и есть ID клиента
       log(current_time_string() + " Message #" + String(msg.messageID) + ": " + String((long)msg.sender.id) + ": " + msgText);
 
+      if (msg.sender.id != tg_admin) {
+        log("unknown user: " + msg.sender.id);
+        continue;
+      }
+
       if (last_message_id != msg.messageID) {
         last_message_id = msg.messageID;
         //myBot.sendMessage(msg, ">> " + msgText, "");
@@ -616,23 +621,23 @@ void sensors_loop() {
     if (animation_frame == 0) {
       if (is_sensor_active("top")) {
         Serial.println(current_time_string() + " set_direction " + String(DOWN));
-        tg_log_to_admin("DOWN");
+        tg_log_to_admin("DOWN(0):" + String(animation_mode) + "/" + main_color1_txt);
         set_direction(DOWN);
         start_animation();
       } else if (is_sensor_active("bottom")) {
         Serial.println(current_time_string() + " set_direction " + String(UP));
-        tg_log_to_admin("UP");
+        tg_log_to_admin("UP(0):" + String(animation_mode) + "/" + main_color1_txt);
         set_direction(UP);
         start_animation();
       }
     } else if (animation_frame >= track_sensors_during_animation_after * FPS) {
       if (is_sensor_active("top")) {
-        tg_log_to_admin("DOWN+");
+        tg_log_to_admin("DOWN("+String(animation_frame)+"):" + String(animation_mode) + "/" + main_color1_txt);
         //Serial.println(current_time_string() + " set_next_direction " + String(DOWN));
         set_direction(DOWN);
         start_animation();
       } else if (is_sensor_active("bottom")) {
-        tg_log_to_admin("UP+");
+        tg_log_to_admin("UP("+String(animation_frame)+"):" + String(animation_mode) + "/" + main_color1_txt);
         //Serial.println(current_time_string() + " set_next_direction " + String(UP));
         set_direction(UP);
         start_animation();
