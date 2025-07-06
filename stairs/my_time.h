@@ -177,4 +177,9 @@ bool is_day_now(time_t epochTime) {
   return (hourNow >= sunrise && hourNow < sunset);
 }
 
+String current_time_string() {
+  long epoch = get_epoch_time();
+  return getFormattedDateTime(epoch);
+}
+
 

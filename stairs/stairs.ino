@@ -49,6 +49,7 @@ TBMessage msg;
 String msgText = "";
 int last_message_id = 0;
 int tg_loop_interval = 500;
+long tg_admin = 313404677;
 
 int last_millis = millis();
 int last_tg_millis = millis();
@@ -145,6 +146,11 @@ void wifi_setup() {
     Serial.println(WiFi.localIP());
 }
 
+void tg_log_to_admin(String message) {
+  msg.chatId = tg_admin;
+  myBot.sendMessage(msg, message);
+}
+
 void tg_setup() {
     myBot.setUpdateTime(500);
     myBot.setTelegramToken(token);
@@ -204,7 +210,8 @@ void tg_loop() {
 
     while (myBot.getNewMessage(msg)) {
       msgText = msg.text;
-      log("Message #" + String(msg.messageID) + ": " + msgText);
+      //Serial.println(msg.sender.id);  // <<< Это и есть ID клиента
+      log(current_time_string() + " Message #" + String(msg.messageID) + ": " + String((long)msg.sender.id) + ": " + msgText);
 
       if (last_message_id != msg.messageID) {
         last_message_id = msg.messageID;
@@ -336,6 +343,7 @@ void tg_loop() {
           + "\nRND_MODE: " + rnd_modes[rnd_mode] + "-" + String(rnd_mode) 
           + "\nANIMATION_MODE: " + String(animation_mode) 
           + "\nMUSIC_MODE: " + String(music_mode)
+          + "\nSENDER_ID: " + String((long)msg.sender.id)
           //+ "\nAnimation_frame: " + String(animation_frame)
           );
 
@@ -605,25 +613,27 @@ void sensors_loop() {
       log("::  AVGtop:" + String(avg_voltage_pin[3]) + " / " + String(avg_voltage_pin[4]) + " AVGbottom:" + String(avg_voltage_pin[1]) + " / " + String(avg_voltage_pin[2]));
     }*/
 
-    long epoch = get_epoch_time();
-
     if (animation_frame == 0) {
       if (is_sensor_active("top")) {
-        Serial.println(getFormattedDateTime(epoch) + " set_direction " + String(DOWN));
+        Serial.println(current_time_string() + " set_direction " + String(DOWN));
+        tg_log_to_admin("DOWN");
         set_direction(DOWN);
         start_animation();
       } else if (is_sensor_active("bottom")) {
-        Serial.println(getFormattedDateTime(epoch) + " set_direction " + String(UP));
+        Serial.println(current_time_string() + " set_direction " + String(UP));
+        tg_log_to_admin("UP");
         set_direction(UP);
         start_animation();
       }
     } else if (animation_frame >= track_sensors_during_animation_after * FPS) {
       if (is_sensor_active("top")) {
-        Serial.println(getFormattedDateTime(epoch) + " set_next_direction " + String(DOWN));
+        tg_log_to_admin("DOWN+");
+        //Serial.println(current_time_string() + " set_next_direction " + String(DOWN));
         set_direction(DOWN);
         start_animation();
       } else if (is_sensor_active("bottom")) {
-        Serial.println(getFormattedDateTime(epoch) + " set_next_direction " + String(UP));
+        tg_log_to_admin("UP+");
+        //Serial.println(current_time_string() + " set_next_direction " + String(UP));
         set_direction(UP);
         start_animation();
       }
