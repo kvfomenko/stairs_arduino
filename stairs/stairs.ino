@@ -218,14 +218,14 @@ void tg_loop() {
 
         } else if (msgText.equalsIgnoreCase("BOTTOM")) {
           log("set BOTTOM");
-          text_matrix("B");
+          //text_matrix("B");
           myBot.sendMessage(msg, "start animation BOTTOM " + String(animation_mode));
           set_direction(UP);
           start_animation();
 
         } else if (msgText.equalsIgnoreCase("TOP")) {
           log("set TOP");
-          text_matrix("T");
+          //text_matrix("T");
           myBot.sendMessage(msg, "start animation TOP " + String(animation_mode));
           set_direction(DOWN);
           start_animation();
@@ -436,7 +436,7 @@ void setup() {
     tg_setup();
 
     log_matrix("Hello");
-    text_matrix("a" + String(animation_mode));
+    //text_matrix("a" + String(animation_mode));
 
 }
 
@@ -468,7 +468,9 @@ void loop() {
     if (work_mode != 4) {
       if (millis() - last_matrix_millis >= FRAME_MS*SHOW_EACH_FRAME) {
         last_matrix_millis = millis();
-        text_matrix(String((int)(animation_frame/SHOW_EACH_FRAME)));
+        //text_matrix(String((int)(animation_frame/SHOW_EACH_FRAME)));
+        text_matrix(String(next_direction));
+        //Serial.println("next_direction: " + String(next_direction));
       }
     }
 
@@ -518,8 +520,8 @@ long measure_echo_time(uint8_t trigPin, uint8_t echoPin) {
 }
 
 void sensors_loop() {
-  long duration_top;
-  long duration_bottom;
+  //long duration_top;
+  //long duration_bottom;
 
   if (work_mode == 3 /*SENSORS*/) {
 
@@ -604,20 +606,38 @@ void sensors_loop() {
       log("::  AVGtop:" + String(avg_voltage_pin[3]) + " / " + String(avg_voltage_pin[4]) + " AVGbottom:" + String(avg_voltage_pin[1]) + " / " + String(avg_voltage_pin[2]));
     }*/
 
+    long epoch = get_epoch_time();
+
     if (animation_frame == 0) {
-      if (distance_top >= distance_top_min && distance_top <= distance_top_max) {
+      if (is_sensor_active("top")) {
+        Serial.println(getFormattedDateTime(epoch) + " set_direction " + String(DOWN));
         set_direction(DOWN);
         start_animation();
-      } else if (distance_bottom >= distance_bottom_min && distance_bottom <= distance_bottom_max) {
+      } else if (is_sensor_active("bottom")) {
+        Serial.println(getFormattedDateTime(epoch) + " set_direction " + String(UP));
         set_direction(UP);
         start_animation();
       }
     } else if (animation_frame >= track_sensors_during_animation_after * FPS) {
-      if (distance_top >= distance_top_min && distance_top <= distance_top_max) {
-        set_next_direction(DOWN);
-      } else if (distance_bottom >= distance_bottom_min && distance_bottom <= distance_bottom_max) {
-        set_next_direction(UP);
+      if (is_sensor_active("top")) {
+        Serial.println(getFormattedDateTime(epoch) + " set_next_direction " + String(DOWN));
+        set_direction(DOWN);
+        start_animation();
+      } else if (is_sensor_active("bottom")) {
+        Serial.println(getFormattedDateTime(epoch) + " set_next_direction " + String(UP));
+        set_direction(UP);
+        start_animation();
       }
+
+      //Serial.println("animation_frame: " + String(animation_frame));
+      /*
+      if (is_sensor_active("top") && next_direction != DOWN) {
+        Serial.println(getFormattedDateTime(epoch) + " set_next_direction " + String(DOWN));
+        set_next_direction(DOWN);
+      } else if (is_sensor_active("bottom") && next_direction != UP) {
+        Serial.println(getFormattedDateTime(epoch) + " set_next_direction " + String(UP));
+        set_next_direction(UP);
+      }*/
     }
 
   }

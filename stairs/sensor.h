@@ -263,3 +263,19 @@ void addValueToBuffer(String sensor, float value) {
 
   updateHistogram(sensor);
 }
+
+bool is_sensor_active(String sensor) {
+  if (sensor == "top") {
+    if (distance_top >= distance_top_min && distance_top <= distance_top_max) {
+      return true;
+    } else {
+      return false;
+    }
+  } else if (sensor == "bottom") {
+    if (distance_bottom >= distance_bottom_min && distance_bottom <= distance_bottom_max) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+}

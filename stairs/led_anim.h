@@ -47,7 +47,7 @@ int DOWN = -1;
 int direction = UP;
 int last_direction = 0;
 int next_direction = 0;
-float track_sensors_during_animation_after = 3.0; // seconds
+float track_sensors_during_animation_after = 4.0; // seconds
 bool is_start_animation = false;
 int animation_frame = 0;
 int max_animation_frame = 0;
@@ -372,6 +372,7 @@ void start_animation() {
     last_start_value_sensor[4] = value_pin[4];
     log("start_animation DOWN t:" + String((int)last_start_distance_top) + " b:" + String((int)last_start_distance_bottom));
   }
+  next_direction = 0;
 
 }
 
@@ -430,10 +431,9 @@ void finish_animation() {
         }
         main_color2_txt = colors_txt_list[new_col_index];
 
-        //Serial.print("next colors: ");
-        Serial.print("next colors: " + String(main_color1.r) + "." + String(main_color1.g) + "." + String(main_color1.b) + "   ");
-        Serial.println(String(main_color2.r) + "." + String(main_color2.g) + "." + String(main_color2.b) );
-        Serial.println("---------------------------------------------");
+        //Serial.print("next colors: " + String(main_color1.r) + "." + String(main_color1.g) + "." + String(main_color1.b) + "   ");
+        //Serial.println(String(main_color2.r) + "." + String(main_color2.g) + "." + String(main_color2.b) );
+        //Serial.println("---------------------------------------------");
     }
   }
 }
@@ -1032,16 +1032,14 @@ void animate_loop() {
     // check animation finish
     animation_frame++;
     if (animation_frame > max_animation_frame && work_mode != 4/*MUSIC*/) {
-        if (next_direction != 0) { // if detected any move during animation
+        finish_animation();
+        if (work_mode == 1 /*ALWAYS-ON*/) {
+            direction = -direction;
+            start_animation();
+        } else if (next_direction != 0) { // if detected any move during animation
             direction = next_direction;
-            next_direction = 0;
-            animation_frame = 1; //restart animation
-        } else {
-            finish_animation();
-            if (work_mode == 1 /*ALWAYS-ON*/) {
-                direction = -direction;
-                start_animation();
-            }
+            start_animation();
+            //animation_frame = 1; //restart animation
         }
     }
 
