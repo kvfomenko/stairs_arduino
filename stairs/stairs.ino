@@ -50,6 +50,7 @@ String msgText = "";
 int last_message_id = 0;
 int tg_loop_interval = 500;
 long tg_admin = 313404677;
+bool tg_admin_log_enabled = true;
 
 int last_millis = millis();
 int last_tg_millis = millis();
@@ -147,8 +148,24 @@ void wifi_setup() {
 }
 
 void tg_log_to_admin(String message) {
-  msg.chatId = tg_admin;
-  myBot.sendMessage(msg, message);
+  if (tg_admin_log_enabled) {
+    msg.chatId = tg_admin;
+    myBot.sendMessage(msg, message);
+  }
+}
+
+void tg_log_start_to_admin() {
+  String dir, volt;
+  if (direction == UP) {
+    dir = "UP";
+    volt = " U:" + String(avg_voltage_pin[3]) + "V " + String(avg_voltage_pin[4]) + "V";
+  } else if (direction == DOWN) {
+    dir = "DOWN";
+    volt = " U:" + String(avg_voltage_pin[1]) + "V " + String(avg_voltage_pin[2]) + "V";
+  }
+
+  Serial.println(current_time_string() + " start " + dir);
+  tg_log_to_admin(dir + " ("+String(animation_frame)+") " + String(animation_mode) + " C:" + main_color1_txt.substring(0, 1) + main_color2_txt.substring(0, 1) + volt);
 }
 
 void tg_setup() {
@@ -160,7 +177,7 @@ void tg_setup() {
     Serial.println(myBot.getBotName());
     log("Telegram connected");
 
-    myReplyKbd.addButton("ALWAYS-OFF");
+    myReplyKbd.addButton("OFF");
     myReplyKbd.addButton("ALWAYS-ON");
     myReplyKbd.addButton("SENSORS");
     myReplyKbd.addButton("MUSIC");
@@ -175,8 +192,8 @@ void tg_setup() {
     myReplyKbd.addButton("MODE");
     myReplyKbd.addButton("COLORS");
     myReplyKbd.addRow();
-    myReplyKbd.addButton("TOP");
-    myReplyKbd.addButton("BOTTOM");
+    myReplyKbd.addButton("UP");
+    myReplyKbd.addButton("DOWN");
 
     myReplyKbd.enableResize();
 
@@ -227,18 +244,20 @@ void tg_loop() {
           myBot.sendMessage(msg, "keyboard activated", myReplyKbd);
           msgText = "";
 
-        } else if (msgText.equalsIgnoreCase("BOTTOM")) {
-          log("set BOTTOM");
+        } else if (msgText.equalsIgnoreCase("UP")) {
+          log("set UP");
           //text_matrix("B");
-          myBot.sendMessage(msg, "start animation BOTTOM " + String(animation_mode));
+          //myBot.sendMessage(msg, "start animation UP " + String(animation_mode));
           set_direction(UP);
+          tg_log_start_to_admin();
           start_animation();
 
-        } else if (msgText.equalsIgnoreCase("TOP")) {
-          log("set TOP");
+        } else if (msgText.equalsIgnoreCase("DOWN")) {
+          log("set DOWN");
           //text_matrix("T");
-          myBot.sendMessage(msg, "start animation TOP " + String(animation_mode));
+          //myBot.sendMessage(msg, "start animation DOWN " + String(animation_mode));
           set_direction(DOWN);
+          tg_log_start_to_admin();
           start_animation();
 
         } else if (msgText.equalsIgnoreCase("BRIGHTNESS")) {
@@ -349,14 +368,22 @@ void tg_loop() {
           + "\nANIMATION_MODE: " + String(animation_mode) 
           + "\nMUSIC_MODE: " + String(music_mode)
           + "\nSENDER_ID: " + String((long)msg.sender.id)
+          + "\n/tg_admin_log_enabled " + String(tg_admin_log_enabled)
           //+ "\nAnimation_frame: " + String(animation_frame)
           );
+
+        } else if (startsWithIgnoreCase(msgText, "/tg_admin_log_enabled 0")) {
+          log("set tg_admin_log_enabled = 0");
+          tg_admin_log_enabled = 0;
+        } else if (startsWithIgnoreCase(msgText, "/tg_admin_log_enabled 1")) {
+          log("set tg_admin_log_enabled = 1");
+          tg_admin_log_enabled = 1;
 
         } else if (msgText.equalsIgnoreCase("RND-OFF") || msgText.equalsIgnoreCase("RND-M") || msgText.equalsIgnoreCase("RND-C") || msgText.equalsIgnoreCase("RND-M-C")) {
           rnd_mode = findInIndex(msgText, rnd_modes);
           log("set rnd_mode " + String(rnd_mode));
 
-        } else if (msgText.equalsIgnoreCase("ALWAYS-OFF") || msgText.equalsIgnoreCase("ALWAYS-ON") || msgText.equalsIgnoreCase("SENSORS") || msgText.equalsIgnoreCase("MUSIC")) {
+        } else if (msgText.equalsIgnoreCase("OFF") || msgText.equalsIgnoreCase("ALWAYS-ON") || msgText.equalsIgnoreCase("SENSORS") || msgText.equalsIgnoreCase("MUSIC")) {
           work_mode = findInIndex(msgText, work_modes);
           log("set work_mode " + String(work_mode));
           if (msgText.equalsIgnoreCase("ALWAYS-ON") || msgText.equalsIgnoreCase("MUSIC")) {
@@ -369,11 +396,10 @@ void tg_loop() {
           }
 
         } else if (msgText.equalsIgnoreCase("COLORS")) {
-          myBot.sendMessage(msg, "COLOR1: " + main_color1_txt //String(main_color1.r) + "." + String(main_color1.g) + "." + String(main_color1.b) 
+          myBot.sendMessage(msg, "COLOR1: " + main_color1_txt
             + "\n/RED" + "\n/GREEN" + "\n/BLUE" + "\n/CYAN" + "\n/MAGENTA" + "\n/YELLOW"
-            + "\n\nCOLOR2: " + main_color2_txt //String(main_color2.r) + "." + String(main_color2.g) + "." + String(main_color2.b) 
-            + "\n/red" + "\n/green" + "\n/blue" + "\n/cyan" + "\n/magenta" + "\n/yellow"
-            );
+            + "\n\nCOLOR2: " + main_color2_txt
+            + "\n/red" + "\n/green" + "\n/blue" + "\n/cyan" + "\n/magenta" + "\n/yellow");
 
         } else if (msgText.equals("/RED")) {
           main_color1 = Red;
@@ -412,7 +438,6 @@ void tg_loop() {
         } else if (msgText.equals("/yellow")) {
           main_color2 = Yellow;
           main_color2_txt = "Yellow";
-
         
         } else if (msgText.equals("1") || msgText.equals("2") || msgText.equals("3") || msgText.equals("4") || msgText.equals("5") || msgText.equals("10") || msgText.equals("11") || msgText.equals("12")) { 
           finish_animation();
@@ -422,7 +447,6 @@ void tg_loop() {
         } else if (msgText.equalsIgnoreCase("M1") || msgText.equalsIgnoreCase("M2") || msgText.equalsIgnoreCase("M3") || msgText.equalsIgnoreCase("M4")) {
           music_mode = msgText.substring(1, 2).toInt();
           log("set music_mode " + String(music_mode));
-          //start_animation();
 
         } else {
           myBot.sendMessage(msg, "/start");
@@ -620,26 +644,22 @@ void sensors_loop() {
 
     if (animation_frame == 0) {
       if (is_sensor_active("top")) {
-        Serial.println(current_time_string() + " set_direction " + String(DOWN));
-        tg_log_to_admin("DOWN(0):" + String(animation_mode) + "/" + main_color1_txt);
         set_direction(DOWN);
+        tg_log_start_to_admin();
         start_animation();
       } else if (is_sensor_active("bottom")) {
-        Serial.println(current_time_string() + " set_direction " + String(UP));
-        tg_log_to_admin("UP(0):" + String(animation_mode) + "/" + main_color1_txt);
         set_direction(UP);
+        tg_log_start_to_admin();
         start_animation();
       }
     } else if (animation_frame >= track_sensors_during_animation_after * FPS) {
       if (is_sensor_active("top")) {
-        tg_log_to_admin("DOWN("+String(animation_frame)+"):" + String(animation_mode) + "/" + main_color1_txt);
-        //Serial.println(current_time_string() + " set_next_direction " + String(DOWN));
         set_direction(DOWN);
+        tg_log_start_to_admin();
         start_animation();
       } else if (is_sensor_active("bottom")) {
-        tg_log_to_admin("UP("+String(animation_frame)+"):" + String(animation_mode) + "/" + main_color1_txt);
-        //Serial.println(current_time_string() + " set_next_direction " + String(UP));
         set_direction(UP);
+        tg_log_start_to_admin();
         start_animation();
       }
 
@@ -662,7 +682,7 @@ int last_mic_log_millis = 0;
 void mic_loop() {
   globalMicValue = getMicVal(micPin, micMethod);
 
-  if (millis() - last_mic_log_millis >= 50) {
+  if (DEBUG_ENABLED && millis() - last_mic_log_millis >= 50) {
     last_mic_log_millis = millis();
     String graph = bar(globalMicValue);
     Serial.println(String(globalMicValue) + " ::: " + graph);
