@@ -46,7 +46,7 @@ int UP = 1;
 int DOWN = -1;
 int direction = UP;
 int last_direction = 0;
-int next_direction = 0;
+//int next_direction = 0;
 float track_sensors_during_animation_after = 4.0; // seconds
 bool is_start_animation = false;
 int animation_frame = 0;
@@ -150,9 +150,10 @@ void set_direction(int new_direction) {
   //log_matrix(String(direction));
 }
 
+/*
 void set_next_direction(int new_direction) {
   next_direction = new_direction;
-}
+}*/
 
 int calc_distance(int step1, int point1, int step2, int point2) {
     return abs(point2 - point1) + abs(step2 - step1) / 4;
@@ -372,7 +373,7 @@ void start_animation() {
     last_start_value_sensor[4] = value_pin[4];
     log("start_animation DOWN t:" + String((int)last_start_distance_top) + " b:" + String((int)last_start_distance_bottom));
   }
-  next_direction = 0;
+  //next_direction = 0;
 
 }
 
@@ -1036,11 +1037,11 @@ void animate_loop() {
         if (work_mode == 1 /*ALWAYS-ON*/) {
             direction = -direction;
             start_animation();
-        } else if (next_direction != 0) { // if detected any move during animation
+        }
+        /* else if (next_direction != 0) { // if detected any move during animation
             direction = next_direction;
             start_animation();
-            //animation_frame = 1; //restart animation
-        }
+        }*/
     }
 
 }

@@ -156,7 +156,6 @@ void tg_setup() {
 
     myReplyKbd.addButton("ALWAYS-OFF");
     myReplyKbd.addButton("ALWAYS-ON");
-    myReplyKbd.addButton("NIGHT-ON");
     myReplyKbd.addButton("SENSORS");
     myReplyKbd.addButton("MUSIC");
     myReplyKbd.addRow();
@@ -280,7 +279,7 @@ void tg_loop() {
             + "\n/range_set_threshold1 " + String(THRESHOLD_VOLTAGE[1])
             + "\n/range_set_threshold2 " + String(THRESHOLD_VOLTAGE[2])
             + "\n\ndistance_top:    " + String(distance_top) + "\ndistance_bottom: " + String(distance_bottom)
-            + "\n\nLAST_DIRECTION: " + String(last_direction) + "\nNEXT_DIRECTION: " + String(next_direction)
+            //+ "\n\nLAST_DIRECTION: " + String(last_direction) + "\nNEXT_DIRECTION: " + String(next_direction)
             + "\n\n/track_sensors_during_animation_after " + String(track_sensors_during_animation_after)
             );
 
@@ -344,7 +343,7 @@ void tg_loop() {
           rnd_mode = findInIndex(msgText, rnd_modes);
           log("set rnd_mode " + String(rnd_mode));
 
-        } else if (msgText.equalsIgnoreCase("ALWAYS-OFF") || msgText.equalsIgnoreCase("ALWAYS-ON") || msgText.equalsIgnoreCase("NIGHT-ON") || msgText.equalsIgnoreCase("SENSORS") || msgText.equalsIgnoreCase("MUSIC")) {
+        } else if (msgText.equalsIgnoreCase("ALWAYS-OFF") || msgText.equalsIgnoreCase("ALWAYS-ON") || msgText.equalsIgnoreCase("SENSORS") || msgText.equalsIgnoreCase("MUSIC")) {
           work_mode = findInIndex(msgText, work_modes);
           log("set work_mode " + String(work_mode));
           if (msgText.equalsIgnoreCase("ALWAYS-ON") || msgText.equalsIgnoreCase("MUSIC")) {
@@ -468,8 +467,8 @@ void loop() {
     if (work_mode != 4) {
       if (millis() - last_matrix_millis >= FRAME_MS*SHOW_EACH_FRAME) {
         last_matrix_millis = millis();
-        //text_matrix(String((int)(animation_frame/SHOW_EACH_FRAME)));
-        text_matrix(String(next_direction));
+        text_matrix(String((int)(animation_frame/SHOW_EACH_FRAME)));
+        //text_matrix(String(next_direction));
         //Serial.println("next_direction: " + String(next_direction));
       }
     }
