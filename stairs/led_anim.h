@@ -479,9 +479,11 @@ void animate_loop() {
   if (work_mode != MUSIC_WORK_MODE) {
 
    if (is_start_background_animation) {
-    
         int frames_per_wave = FPS;
         CRGB bg_color = DGrey;
+        if (is_day_now(get_epoch_time())) {
+            bg_color = Black;
+        }
         if (check_frames(1, frames_per_wave, 4)) {
             fill_step(first_step, CRGB(progress*bg_color.r, progress*bg_color.g, progress*bg_color.b));
             fill_step(last_step, CRGB(degress*bg_color.r, degress*bg_color.g, degress*bg_color.b));

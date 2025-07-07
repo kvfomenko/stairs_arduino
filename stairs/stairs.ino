@@ -608,7 +608,7 @@ void sensors_loop() {
 
     //log("sensors_loop " + String(value_pin[1]) + " " + String(value_pin[2]) + " " + String(value_pin[3]) + " " + String(value_pin[4]) );
 
-    if (!is_start_animation/*animation_frame == 0*/) {
+    if (!is_start_animation) {
       if (is_sensor_active("top")) {
         set_direction(DOWN);
         tg_log_start_to_admin();
