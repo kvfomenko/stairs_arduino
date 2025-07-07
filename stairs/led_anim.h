@@ -35,10 +35,10 @@ const float blue_watts_per_led = 0.1116;
 const float scale_greenblue_to_red = red_watts_per_led / green_watts_per_led;
 
 const String work_modes[] = {"OFF", "ALWAYS-ON", "SENSORS", "MUSIC"};
-const ALWAYS_ON_WORK_CODE = findInIndex("ALWAYS-ON", work_modes);
-const SENSORS_WORK_CODE = findInIndex("SENSORS", work_modes);
-const MUSIC_WORK_CODE = findInIndex("MUSIC", work_modes);
-int work_mode = SENSORS_WORK_CODE;
+const int ALWAYS_ON_WORK_MODE = findInIndex("ALWAYS-ON", work_modes);
+const int SENSORS_WORK_MODE = findInIndex("SENSORS", work_modes);
+const int MUSIC_WORK_MODE = findInIndex("MUSIC", work_modes);
+int work_mode = SENSORS_WORK_MODE;
 const String rnd_modes[] = {"RND-OFF", "RND-M", "RND-C", "RND-M-C"};
 int rnd_mode = findInIndex("RND-M-C", rnd_modes);
 int animation_mode = 0;
@@ -476,11 +476,11 @@ void finish_animation() {
 void animate_loop() {
   max_animation_frame = 0;
 
-  if (work_mode != MUSIC_WORK_CODE) {
+  if (work_mode != MUSIC_WORK_MODE) {
 
    if (is_start_background_animation) {
     
-        int frames_per_wave = FPS/2;
+        int frames_per_wave = FPS;
         CRGB bg_color = DGrey;
         if (check_frames(1, frames_per_wave, 4)) {
             fill_step(first_step, CRGB(progress*bg_color.r, progress*bg_color.g, progress*bg_color.b));
@@ -947,7 +947,7 @@ void animate_loop() {
     }
   }
 
-  if (work_mode == MUSIC_WORK_CODE) {
+  if (work_mode == MUSIC_WORK_MODE) {
     //animation_mode == 6
     if (music_mode == 1) {
         //music vertical single color
@@ -1093,18 +1093,18 @@ void animate_loop() {
             }
         }
     }
-  } // if work_mode == MUSIC_WORK_CODE
+  } // if work_mode == MUSIC_WORK_MODE
 
     // check animation finish
     animation_frame++;
-    if (animation_frame > max_animation_frame && work_mode != MUSIC_WORK_CODE) {
+    if (animation_frame > max_animation_frame && work_mode != MUSIC_WORK_MODE) {
         if (is_start_background_animation) {
             animation_frame = 1;
         } else {
             finish_animation();
         }
 
-        if (work_mode == 1 /*ALWAYS-ON*/) {
+        if (work_mode == ALWAYS_ON_WORK_MODE) {
             direction = -direction;
             start_animation();
         }

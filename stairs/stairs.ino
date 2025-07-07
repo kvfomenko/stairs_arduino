@@ -568,7 +568,7 @@ void sensors_loop() {
   //long duration_top;
   //long duration_bottom;
 
-  if (work_mode == SENSORS_WORK_CODE) {
+  if (work_mode == SENSORS_WORK_MODE) {
       value_pin[3] = analogRead(TOP_IR_SENSOR1_PIN);  // 0–4095
       value_pin[4] = analogRead(TOP_IR_SENSOR2_PIN);  // 0–4095
       voltage_pin[3] = get_analog_voltage_from_value(value_pin[3]);
