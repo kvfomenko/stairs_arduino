@@ -35,12 +35,14 @@ const float blue_watts_per_led = 0.1116;
 const float scale_greenblue_to_red = red_watts_per_led / green_watts_per_led;
 
 const String work_modes[] = {"OFF", "ALWAYS-ON", "SENSORS", "MUSIC"};
-int work_mode = findInIndex("SENSORS", work_modes);
+const ALWAYS_ON_WORK_CODE = findInIndex("ALWAYS-ON", work_modes);
+const SENSORS_WORK_CODE = findInIndex("SENSORS", work_modes);
+const MUSIC_WORK_CODE = findInIndex("MUSIC", work_modes);
+int work_mode = SENSORS_WORK_CODE;
 const String rnd_modes[] = {"RND-OFF", "RND-M", "RND-C", "RND-M-C"};
 int rnd_mode = findInIndex("RND-M-C", rnd_modes);
-int animation_mode = 1;
+int animation_mode = 0;
 int animation_auto_started = 0;
-int screensaver_mode = 0;
 int music_mode = 4;
 CRGB main_color1 = Red;
 CRGB main_color2 = Blue;
@@ -54,6 +56,7 @@ int last_direction = 0;
 long last_start_time = 0;
 float track_sensors_during_animation_after = 4.0; // seconds
 bool is_start_animation = false;
+bool is_start_background_animation = false;
 int animation_frame = 0;
 int max_animation_frame = 0;
 int key_frames = 1;
@@ -348,8 +351,9 @@ CRGB calc_back_color() {
 }
 
 
-
 void start_animation() {
+  log("start_animation");
+  is_start_background_animation = false;
   is_start_animation = true;
   clear_all();
 
@@ -393,9 +397,20 @@ void start_animation() {
 
 }
 
+void start_background_animation() {
+    log("start_background_animation");
+    is_start_background_animation = true;
+    clear_all();
+
+    direction = UP;
+    animation_frame = 1;
+    first_step = 0;
+    last_step = NUM_STEPS - 1;
+}
+
 void finish_animation() {
-  is_start_animation = false;
-  if (animation_frame > 0) {
+    log("finish_animation");
+    is_start_animation = false;
     animation_frame = 0;
 
     clear_all();
@@ -453,19 +468,60 @@ void finish_animation() {
         //Serial.println(String(main_color2.r) + "." + String(main_color2.g) + "." + String(main_color2.b) );
         //Serial.println("---------------------------------------------");
     }
-  }
+
+    start_background_animation();
 }
 
 
 void animate_loop() {
   max_animation_frame = 0;
 
-  if (work_mode != 4 /*MUSIC*/) {
+  if (work_mode != MUSIC_WORK_CODE) {
+
+   if (is_start_background_animation) {
+    
+        int frames_per_wave = FPS/2;
+        CRGB bg_color = DGrey;
+        if (check_frames(1, frames_per_wave, 4)) {
+            fill_step(first_step, CRGB(progress*bg_color.r, progress*bg_color.g, progress*bg_color.b));
+            fill_step(last_step, CRGB(degress*bg_color.r, degress*bg_color.g, degress*bg_color.b));
+        }
+        if (check_frames(frames_per_wave, frames_per_wave*2, 4)) {
+            fill_step(first_step, CRGB(degress*bg_color.r, degress*bg_color.g, degress*bg_color.b));
+            fill_step(last_step, CRGB(progress*bg_color.r, progress*bg_color.g, progress*bg_color.b));
+        }
+
+   } else {
+
+    if (animation_mode == 0) {
+        //slow gradient wave
+        int waves_count = 1;
+        int frames_per_wave = FPS * 2;
+        CRGB wave_color1 = main_color1;
+        CRGB wave_color2 = main_color2;
+
+        for (int wave_i=0; wave_i<waves_count; wave_i++) {
+            if (check_frames(wave_i*frames_per_wave + 1, wave_i*frames_per_wave + 32, 4)) {
+                fill_step(first_step, CRGB(progress*wave_color1.r, progress*wave_color1.g, progress*wave_color1.b));
+            }
+            if (check_frames(wave_i*frames_per_wave + 32, wave_i*frames_per_wave + 64, 4)) {
+                fill_step(first_step, CRGB(degress*wave_color1.r + progress*wave_color2.r,
+                                        degress*wave_color1.g + progress*wave_color2.g,
+                                        degress*wave_color1.b + progress*wave_color2.b));
+            }
+            if (check_frames(wave_i*frames_per_wave + 64, wave_i*frames_per_wave + 96, 4)) {
+                fill_step(first_step, CRGB(degress*wave_color2.r, degress*wave_color2.g, degress*wave_color2.b));
+            }
+        }
+        if (check_frames(4, (waves_count-1)*frames_per_wave + 128 + 16, 4)) {
+            move_all();
+        }
+    }
 
     if (animation_mode == 1) {
         //slow gradient wave
         int waves_count = 5;
-        int frames_per_wave = 128;
+        int frames_per_wave = FPS * 2;
         CRGB wave_color1 = main_color1;
         CRGB wave_color2 = main_color2;
 
@@ -887,11 +943,11 @@ void animate_loop() {
                 sine_i = 0;
             }
         }
+      }
     }
-
   }
 
-  if (work_mode == 4 /*MUSIC*/) {
+  if (work_mode == MUSIC_WORK_CODE) {
     //animation_mode == 6
     if (music_mode == 1) {
         //music vertical single color
@@ -1037,12 +1093,17 @@ void animate_loop() {
             }
         }
     }
-  } // if work_mode == MUSIC
+  } // if work_mode == MUSIC_WORK_CODE
 
     // check animation finish
     animation_frame++;
-    if (animation_frame > max_animation_frame && work_mode != 4/*MUSIC*/) {
-        finish_animation();
+    if (animation_frame > max_animation_frame && work_mode != MUSIC_WORK_CODE) {
+        if (is_start_background_animation) {
+            animation_frame = 1;
+        } else {
+            finish_animation();
+        }
+
         if (work_mode == 1 /*ALWAYS-ON*/) {
             direction = -direction;
             start_animation();

@@ -222,7 +222,7 @@ void led_setup() {
 }
 
 void tg_loop() {
-    log("in tg_loop");
+    //log("in tg_loop");
     myBot.setUpdateTime(tg_loop_interval);
 
     while (myBot.getNewMessage(msg)) {
@@ -311,7 +311,7 @@ void tg_loop() {
             + "\n/range_set_threshold2 " + String(THRESHOLD_VOLTAGE[2])
             + "\n\ndistance_top:    " + String(distance_top) + "\ndistance_bottom: " + String(distance_bottom)
             + "\n\nLAST_DIRECTION: " + String(last_direction) 
-            + "\n\nLAST_TIME: " + getFormattedDateTime(last_start_time) 
+            + "\nLAST_TIME: " + getFormattedDateTime(last_start_time) 
             //+ "\nNEXT_DIRECTION: " + String(next_direction)
             + "\n\n/track_sensors_during_animation_after " + String(track_sensors_during_animation_after)
             );
@@ -477,6 +477,8 @@ void setup() {
     tg_setup();
 
     log_matrix("Hello");
+
+    animation_mode = 0;
     start_animation();
     //text_matrix("a" + String(animation_mode));
 
@@ -485,7 +487,7 @@ void setup() {
 void loop() {
 
     //if (isModeForMusic(animation_mode)) {
-    if (work_mode == 4/*MUSIC*/) {
+    if (work_mode == MUSIC_WORK_MODE) {
       if (millis() - last_mic_millis >= 1) {
         last_mic_millis = millis();
         mic_loop();
@@ -507,7 +509,7 @@ void loop() {
       }
     }
 
-    if (work_mode != 4) {
+    if (work_mode != MUSIC_WORK_MODE) {
       if (millis() - last_matrix_millis >= FRAME_MS*SHOW_EACH_FRAME) {
         last_matrix_millis = millis();
         text_matrix(String((int)(animation_frame/SHOW_EACH_FRAME)));
@@ -566,23 +568,7 @@ void sensors_loop() {
   //long duration_top;
   //long duration_bottom;
 
-  if (work_mode == 3 /*SENSORS*/) {
-
-    /*if (TOP_SENS == SONIC_SENSOR) {
-      duration_top = measure_echo_time(TOP_TRIG_PIN, TOP_ECHO_PIN);
-      if (duration_top > 0 && duration_top < TIMEOUT_MCS) {
-        // Расчёт расстояния (343 м/сек) (в см)
-        new_distance_top = duration_top * 343 * 100 / 1000000 / 2;
-        if (new_distance_top > track_in_histogram_top_min && new_distance_top < track_in_histogram_top_max) {
-          addValueToBuffer("top", new_distance_top);
-        } else {
-          addValueToBuffer("top", 0);
-        }
-      } else {
-        addValueToBuffer("top", 0);
-      }
-      distance_top = getValFromHistogram("top");
-    } else if (TOP_SENS == IR_SENSOR) {*/
+  if (work_mode == SENSORS_WORK_CODE) {
       value_pin[3] = analogRead(TOP_IR_SENSOR1_PIN);  // 0–4095
       value_pin[4] = analogRead(TOP_IR_SENSOR2_PIN);  // 0–4095
       voltage_pin[3] = get_analog_voltage_from_value(value_pin[3]);
@@ -596,26 +582,11 @@ void sensors_loop() {
 
       if (avg_voltage_pin[3] >= THRESHOLD_VOLTAGE[3] || avg_voltage_pin[4] >= THRESHOLD_VOLTAGE[4]) {
         distance_top = distance_top_min;
+        log("distance_top " + String(distance_top) + " is_start_animation:" + String(is_start_animation));
       } else {
         distance_top = 0;
       }
-    //}
 
-    /*if (BOTTOM_SENS == SONIC_SENSOR) {
-      duration_bottom = measure_echo_time(BOTTOM_TRIG_PIN, BOTTOM_ECHO_PIN);
-      if (duration_bottom > 0 && duration_bottom < TIMEOUT_MCS) {
-        // Расчёт расстояния (343 м/сек) (в см)
-        new_distance_bottom = duration_bottom * 343 * 100 / 1000000 / 2;
-        if (new_distance_bottom > track_in_histogram_bottom_min && new_distance_bottom < track_in_histogram_bottom_max) {
-          addValueToBuffer("bottom", new_distance_bottom);
-        } else {
-          addValueToBuffer("bottom", 0);
-        }
-      } else {
-        addValueToBuffer("bottom", 0);
-      }
-      distance_bottom = getValFromHistogram("bottom");
-    } else if (BOTTOM_SENS == IR_SENSOR) {*/
       value_pin[1] = analogRead(BOTTOM_IR_SENSOR1_PIN);  // 0–4095
       value_pin[2] = analogRead(BOTTOM_IR_SENSOR2_PIN);  // 0–4095
       voltage_pin[1] = get_analog_voltage_from_value(value_pin[1]);
@@ -630,26 +601,14 @@ void sensors_loop() {
       //if (digitalRead(BOTTOM_IR_SENSOR1_PIN) == HIGH || digitalRead(BOTTOM_IR_SENSOR2_PIN) == HIGH) {
       if (avg_voltage_pin[1] >= THRESHOLD_VOLTAGE[1] || avg_voltage_pin[2] >= THRESHOLD_VOLTAGE[2]) {
         distance_bottom = distance_bottom_min;
+        log("distance_bottom " + String(distance_bottom) + " is_start_animation:" + String(is_start_animation));
       } else {
         distance_bottom = 0;
       }
-    //}
 
-    /*if (millis() - last_hist_millis >= 50) {
-      last_hist_millis = millis();
-      String hist_top = ".";
-      String hist_bottom = ".";
-      if (TOP_SENS == SONIC_SENSOR) {
-        hist_top = getHistogram("top");
-      }
-      if (BOTTOM_SENS == SONIC_SENSOR) {
-        hist_bottom = getHistogram("bottom");
-      }
+    //log("sensors_loop " + String(value_pin[1]) + " " + String(value_pin[2]) + " " + String(value_pin[3]) + " " + String(value_pin[4]) );
 
-      log("::  AVGtop:" + String(avg_voltage_pin[3]) + " / " + String(avg_voltage_pin[4]) + " AVGbottom:" + String(avg_voltage_pin[1]) + " / " + String(avg_voltage_pin[2]));
-    }*/
-
-    if (animation_frame == 0) {
+    if (!is_start_animation/*animation_frame == 0*/) {
       if (is_sensor_active("top")) {
         set_direction(DOWN);
         tg_log_start_to_admin();
@@ -661,7 +620,7 @@ void sensors_loop() {
         start_animation();
         animation_auto_started = 0;
       }
-    } else if (animation_frame >= track_sensors_during_animation_after * FPS && animation_auto_started < 2) {
+    } else if (is_start_animation && animation_frame >= track_sensors_during_animation_after * FPS && animation_auto_started < 2) {
       if (is_sensor_active("top") && direction == DOWN) {
         //set_direction(DOWN);
         tg_log_start_to_admin();
@@ -686,6 +645,7 @@ void sensors_loop() {
     }
 
   }
+
 }
 
 
