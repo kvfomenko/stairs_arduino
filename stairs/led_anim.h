@@ -10,31 +10,36 @@ CRGB leds[NUM_STEPS * POINTS_PER_STEP];
 int FPS = 64;
 int FRAME_MS = 1000 / FPS;
 int MODES_FOR_RANDOM[] = {1, 2, 3, 4, 5, 10, 11, 12};
-int MAX_ILLUM = 255;
+//int MAX_ILLUM = 255;
+int MAX_ILLUM_R = 255;
+int MAX_ILLUM_G = 175;
+int MAX_ILLUM_B = 175;
 
 const CRGB Black = CRGB(0,0,0);
-const CRGB White = CRGB(MAX_ILLUM,MAX_ILLUM,MAX_ILLUM);
-const CRGB Red = CRGB(MAX_ILLUM,0,0);
-const CRGB Green = CRGB(0,MAX_ILLUM,0);
-const CRGB Blue = CRGB(0,0,MAX_ILLUM);
-const CRGB Cyan = CRGB(0,MAX_ILLUM,MAX_ILLUM);
-const CRGB Magenta = CRGB(MAX_ILLUM,0,MAX_ILLUM);
-const CRGB Yellow = CRGB(MAX_ILLUM,MAX_ILLUM,0);
-const CRGB Grey = CRGB(MAX_ILLUM/2,MAX_ILLUM/2,MAX_ILLUM/2);
-const CRGB DGrey = CRGB(MAX_ILLUM/4,MAX_ILLUM/4,MAX_ILLUM/4);
-const CRGB LGrey = CRGB(MAX_ILLUM-MAX_ILLUM/4,MAX_ILLUM-MAX_ILLUM/4,MAX_ILLUM-MAX_ILLUM/4);
+const CRGB White = CRGB(MAX_ILLUM_R,MAX_ILLUM_G,MAX_ILLUM_B);
+const CRGB Red = CRGB(MAX_ILLUM_R,0,0);
+const CRGB Green = CRGB(0,MAX_ILLUM_G,0);
+const CRGB Blue = CRGB(0,0,MAX_ILLUM_B);
+const CRGB Cyan = CRGB(0, MAX_ILLUM_G, MAX_ILLUM_B);
+const CRGB Magenta = CRGB(MAX_ILLUM_R, 0, MAX_ILLUM_B);
+const CRGB Yellow = CRGB(MAX_ILLUM_R, MAX_ILLUM_G, 0);
+const CRGB Grey = CRGB(MAX_ILLUM_R/2, MAX_ILLUM_G/2, MAX_ILLUM_B/2);
+const CRGB DGrey = CRGB(MAX_ILLUM_R/4, MAX_ILLUM_G/4, MAX_ILLUM_B/4);
+const CRGB LGrey = CRGB(MAX_ILLUM_R-MAX_ILLUM_R/4, MAX_ILLUM_G-MAX_ILLUM_G/4, MAX_ILLUM_B-MAX_ILLUM_B/4);
 const CRGB colors_list[] = {Red,Red,Green,Blue,Cyan,Magenta,Yellow};
 const String colors_txt_list[] = {"Red","Red","Green","Blue","Cyan","Magenta","Yellow"};
 
 const float red_watts_per_led = 0.0767;  // 9 Watt per meter (WS2811 30 leds per meter)
 const float green_watts_per_led = 0.1116;
 const float blue_watts_per_led = 0.1116;
+const float scale_greenblue_to_red = red_watts_per_led / green_watts_per_led;
 
-const String work_modes[] = {"OFF", "ALWAYS-ON", "NIGHT-ON", "SENSORS", "MUSIC"};
+const String work_modes[] = {"OFF", "ALWAYS-ON", "SENSORS", "MUSIC"};
 int work_mode = findInIndex("SENSORS", work_modes);
 const String rnd_modes[] = {"RND-OFF", "RND-M", "RND-C", "RND-M-C"};
 int rnd_mode = findInIndex("RND-M-C", rnd_modes);
-int animation_mode = 12;
+int animation_mode = 1;
+int animation_auto_started = 0;
 int screensaver_mode = 0;
 int music_mode = 4;
 CRGB main_color1 = Red;
@@ -46,6 +51,7 @@ int UP = 1;
 int DOWN = -1;
 int direction = UP;
 int last_direction = 0;
+long last_start_time = 0;
 float track_sensors_during_animation_after = 4.0; // seconds
 bool is_start_animation = false;
 int animation_frame = 0;
@@ -138,6 +144,17 @@ void scale_power(float scale) {
       leds[led_num + led_i].r = leds[led_num + led_i].r * scale;
       leds[led_num + led_i].g = leds[led_num + led_i].g * scale;
       leds[led_num + led_i].b = leds[led_num + led_i].b * scale;
+    }
+  }
+}
+void scale_red_color() {
+  int led_num;
+  for (int step_i = 0; step_i < NUM_STEPS; step_i++) {
+    led_num = step_i * POINTS_PER_STEP;
+    for (int led_i = 0; led_i < POINTS_PER_STEP; led_i++) {
+      //leds[led_num + led_i].r = leds[led_num + led_i].r * scale_greenblue_to_red;
+      leds[led_num + led_i].g = leds[led_num + led_i].g * scale_greenblue_to_red;
+      leds[led_num + led_i].b = leds[led_num + led_i].b * scale_greenblue_to_red;
     }
   }
 }
@@ -336,12 +353,12 @@ void start_animation() {
   is_start_animation = true;
   clear_all();
 
-  if (is_start_animation && direction == UP) {
+  if (direction == UP) {
     animation_frame = 1;
     first_step = 0;
     last_step = NUM_STEPS - 1;
-    is_start_animation = false;
     last_direction = direction;
+    last_start_time = get_epoch_time();
     last_start_distance_top = 0;
     last_start_distance_bottom = distance_bottom;
     last_start_voltage_sensor[1] = voltage_pin[1];
@@ -354,12 +371,12 @@ void start_animation() {
     last_start_value_sensor[4] = 0;
     log("start_animation UP t:" + String((int)last_start_distance_top) + " b:" + String((int)last_start_distance_bottom));
   }
-  if (is_start_animation && direction == DOWN) {
+  if (direction == DOWN) {
     animation_frame = 1;
     first_step = NUM_STEPS - 1;
     last_step = 0;
-    is_start_animation = false;
     last_direction = direction;
+    last_start_time = get_epoch_time();
     last_start_distance_top = distance_top;
     last_start_distance_bottom = 0;
     last_start_voltage_sensor[1] = 0;
@@ -377,6 +394,7 @@ void start_animation() {
 }
 
 void finish_animation() {
+  is_start_animation = false;
   if (animation_frame > 0) {
     animation_frame = 0;
 
@@ -538,7 +556,7 @@ void animate_loop() {
                 }
                 if (i>0){
                     if (check_frames(i*speedoff+64,i*speedoff+96,4)) {
-                        //draw_step3(i-1, Red, CRGB(degress*MAX_ILLUM, 0, 0), Red);
+                        //draw_step3(i-1, Red, CRGB(degress*MAX_ILLUM_R, 0, 0), Red);
                         draw_step3(i-1,
                             wave_color1,
                             CRGB(degress*wave_color1.r,degress*wave_color1.g,degress*wave_color1.b),
@@ -1021,14 +1039,6 @@ void animate_loop() {
     }
   } // if work_mode == MUSIC
 
-
-    /*float power = calc_power();
-    if (power > MAX_POWER_SUPPLY) {
-      float scale = (float)MAX_POWER_SUPPLY/power;
-      scale_power(scale);
-      log("power scaled from:" + String(power));
-    }*/
-
     // check animation finish
     animation_frame++;
     if (animation_frame > max_animation_frame && work_mode != 4/*MUSIC*/) {
@@ -1037,11 +1047,17 @@ void animate_loop() {
             direction = -direction;
             start_animation();
         }
-        /* else if (next_direction != 0) { // if detected any move during animation
-            direction = next_direction;
-            start_animation();
-        }*/
     }
 
 }
 
+void fix_power_and_gamma(){
+    /*float power = calc_power();
+    if (power > MAX_POWER_SUPPLY) {
+      float scale = (float)MAX_POWER_SUPPLY/power;
+      scale_power(scale);
+      log("power scaled from:" + String(power));
+    }*/
+
+    //scale_red_color();
+}

@@ -158,14 +158,14 @@ void tg_log_start_to_admin() {
   String dir, volt;
   if (direction == UP) {
     dir = "UP";
-    volt = " U:" + String(avg_voltage_pin[3]) + "V " + String(avg_voltage_pin[4]) + "V";
+    volt = " " + String(avg_voltage_pin[1]) + "V " + String(avg_voltage_pin[2]) + "V";
   } else if (direction == DOWN) {
     dir = "DOWN";
-    volt = " U:" + String(avg_voltage_pin[1]) + "V " + String(avg_voltage_pin[2]) + "V";
+    volt = " " + String(avg_voltage_pin[3]) + "V " + String(avg_voltage_pin[4]) + "V";
   }
 
   Serial.println(current_time_string() + " start " + dir);
-  tg_log_to_admin(dir + " ("+String(animation_frame)+") " + String(animation_mode) + " C:" + main_color1_txt.substring(0, 1) + main_color2_txt.substring(0, 1) + volt);
+  tg_log_to_admin(dir + " ("+String(animation_frame / FPS)+") " + String(animation_mode) + " C:" + main_color1_txt.substring(0, 1) + main_color2_txt.substring(0, 1) + volt);
 }
 
 void tg_setup() {
@@ -310,7 +310,9 @@ void tg_loop() {
             + "\n/range_set_threshold1 " + String(THRESHOLD_VOLTAGE[1])
             + "\n/range_set_threshold2 " + String(THRESHOLD_VOLTAGE[2])
             + "\n\ndistance_top:    " + String(distance_top) + "\ndistance_bottom: " + String(distance_bottom)
-            //+ "\n\nLAST_DIRECTION: " + String(last_direction) + "\nNEXT_DIRECTION: " + String(next_direction)
+            + "\n\nLAST_DIRECTION: " + String(last_direction) 
+            + "\n\nLAST_TIME: " + getFormattedDateTime(last_start_time) 
+            //+ "\nNEXT_DIRECTION: " + String(next_direction)
             + "\n\n/track_sensors_during_animation_after " + String(track_sensors_during_animation_after)
             );
 
@@ -386,12 +388,15 @@ void tg_loop() {
         } else if (msgText.equalsIgnoreCase("OFF") || msgText.equalsIgnoreCase("ALWAYS-ON") || msgText.equalsIgnoreCase("SENSORS") || msgText.equalsIgnoreCase("MUSIC")) {
           work_mode = findInIndex(msgText, work_modes);
           log("set work_mode " + String(work_mode));
+          if (msgText.equalsIgnoreCase("MUSIC")) {
+            myBot.sendMessage(msg, "send:\nM1\nM2\nM3\nM4");
+          }
+
           if (msgText.equalsIgnoreCase("ALWAYS-ON") || msgText.equalsIgnoreCase("MUSIC")) {
             start_animation();
           } else {
             clear_all();
             FastLED.show();
-            is_start_animation = false;
             finish_animation();
           }
 
@@ -472,6 +477,7 @@ void setup() {
     tg_setup();
 
     log_matrix("Hello");
+    start_animation();
     //text_matrix("a" + String(animation_mode));
 
 }
@@ -486,7 +492,7 @@ void loop() {
       }
       tg_loop_interval = 20000;
     } else {
-      if (animation_frame == 0) {
+      if (animation_frame <= 1) {
         tg_loop_interval = 500;
         if (millis() - last_br_millis >= 60*1000) {
           last_br_millis = millis();
@@ -523,6 +529,7 @@ void led_animate_loop() {
         last_millis = millis();
         if (animation_frame > 0) {
           animate_loop();
+          fix_power_and_gamma();
           FastLED.show();
         }
     }
@@ -647,20 +654,24 @@ void sensors_loop() {
         set_direction(DOWN);
         tg_log_start_to_admin();
         start_animation();
+        animation_auto_started = 0;
       } else if (is_sensor_active("bottom")) {
         set_direction(UP);
         tg_log_start_to_admin();
         start_animation();
+        animation_auto_started = 0;
       }
-    } else if (animation_frame >= track_sensors_during_animation_after * FPS) {
-      if (is_sensor_active("top")) {
-        set_direction(DOWN);
+    } else if (animation_frame >= track_sensors_during_animation_after * FPS && animation_auto_started < 2) {
+      if (is_sensor_active("top") && direction == DOWN) {
+        //set_direction(DOWN);
         tg_log_start_to_admin();
         start_animation();
-      } else if (is_sensor_active("bottom")) {
-        set_direction(UP);
+        animation_auto_started++;
+      } else if (is_sensor_active("bottom") && direction == UP) {
+        //set_direction(UP);
         tg_log_start_to_admin();
         start_animation();
+        animation_auto_started++;
       }
 
       //Serial.println("animation_frame: " + String(animation_frame));
