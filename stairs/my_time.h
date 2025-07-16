@@ -174,7 +174,7 @@ bool is_day_now(time_t epochTime) {
   double hourNow = secondsOfDay / secondsPerHour;
 
   // Сравниваем с интервалом между рассветом и закатом
-  return (hourNow >= sunrise && hourNow < sunset);
+  return (hourNow >= sunrise + timezone_offset && hourNow < sunset + timezone_offset);
 }
 
 String current_time_string() {
