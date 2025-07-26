@@ -50,7 +50,7 @@ String msgText = "";
 int last_message_id = 0;
 int tg_loop_interval = 500;
 long tg_admin = 313404677;
-bool tg_admin_log_enabled = true;
+bool tg_admin_log_enabled = false;
 
 int last_millis = millis();
 int last_tg_millis = millis();
@@ -369,7 +369,7 @@ void tg_loop() {
           + "\nRND_MODE: " + rnd_modes[rnd_mode] + "-" + String(rnd_mode) 
           + "\nANIMATION_MODE: " + String(animation_mode) 
           + "\nMUSIC_MODE: " + String(music_mode)
-          + "\nSENDER_ID: " + String((long)msg.sender.id)
+          //+ "\nSENDER_ID: " + String((long)msg.sender.id)
           + "\n/tg_admin_log_enabled " + String(tg_admin_log_enabled)
           //+ "\nAnimation_frame: " + String(animation_frame)
           );

@@ -75,7 +75,7 @@ CRGB pal_color1 = Red;
 CRGB pal_color2 = Green;
 
 
-int sine_i;
+int sine_i = 0; int sine2_i = 0;
 #define SINE_MASK_ROWS 16
 #define SINE_MASK_COLS 9
 CRGB sine_mask[SINE_MASK_ROWS][SINE_MASK_COLS] = {
@@ -480,6 +480,7 @@ void animate_loop() {
 
    if (is_start_background_animation) {
         int frames_per_wave = FPS;
+        /* blink step
         CRGB bg_color = DGrey;
         if (is_day_now(get_epoch_time())) {
             bg_color = Black;
@@ -491,7 +492,49 @@ void animate_loop() {
         if (check_frames(frames_per_wave, frames_per_wave*2, 4)) {
             fill_step(first_step, CRGB(degress*bg_color.r, degress*bg_color.g, degress*bg_color.b));
             fill_step(last_step, CRGB(progress*bg_color.r, progress*bg_color.g, progress*bg_color.b));
+        }*/
+        if (animation_frame == 1) {
+            sine_i = 0;
+            sine2_i = SINE_MASK_ROWS-1;
         }
+        if (is_day_now(get_epoch_time())) {
+
+        } else {
+            if (check_frames(1, frames_per_wave*2, 4)) {
+                CRGB points[POINTS_PER_STEP];
+                CRGB bg_color = main_color1;
+                bg_color = CRGB(bg_color.r / 2, bg_color.g / 2, bg_color.b / 2);
+                for (int i = 0; i < POINTS_PER_STEP; i++) {
+                    points[i] = CRGB(
+                        (sine_mask[sine_i][i].r * bg_color.r) / 256,
+                        (sine_mask[sine_i][i].g * bg_color.g) / 256,
+                        (sine_mask[sine_i][i].b * bg_color.b) / 256
+                    );
+                }
+                draw_step(first_step, points);
+
+                bg_color = main_color2;
+                bg_color = CRGB(bg_color.r / 2, bg_color.g / 2, bg_color.b / 2);
+                for (int i = 0; i < POINTS_PER_STEP; i++) {
+                    points[i] = CRGB(
+                        (sine_mask[sine2_i][i].r * bg_color.r) / 256,
+                        (sine_mask[sine2_i][i].g * bg_color.g) / 256,
+                        (sine_mask[sine2_i][i].b * bg_color.b) / 256
+                    );
+                }
+                draw_step(last_step, points);
+
+                sine_i++;
+                if (sine_i == SINE_MASK_ROWS) {
+                    sine_i = 0;
+                }
+                sine2_i--;
+                if (sine2_i == -1) {
+                    sine2_i = SINE_MASK_ROWS-1;
+                }
+            }
+        }
+
 
    } else {
 
@@ -895,7 +938,7 @@ void animate_loop() {
             if (direction == UP) {
                 draw_step(first_step, points);
             } else {
-                draw_step(NUM_STEPS - 1, points);
+                draw_step(last_step, points);
             }
 
             sine_i++;

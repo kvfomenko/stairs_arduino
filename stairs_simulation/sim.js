@@ -263,7 +263,7 @@ let last_step;
 let pal_color1 = Red;
 let pal_color2 = Green;
 let worms = [];
-let sine_i;
+let sine_i = 0; sine2_i = 0;
 let sine_mask = [
     [DGrey,DGrey,DGrey,LGrey,White,LGrey,DGrey,DGrey,DGrey],
     [DGrey,DGrey,DGrey,DGrey,DGrey,Grey,White,Grey,DGrey],
@@ -498,8 +498,8 @@ function animate_loop() {
     max_animation_frame = 0;
 
     if (is_start_background_animation) {
-        let frames_per_wave = FPS/2;
-        let bg_color = DGrey;
+        let frames_per_wave = FPS;
+        /*let bg_color = Grey;
         if (check_frames(1, frames_per_wave, 4)) {
             fill_step(first_step, CRGB(progress*bg_color[0], progress*bg_color[1], progress*bg_color[2]));
             fill_step(last_step, CRGB(degress*bg_color[0], degress*bg_color[1], degress*bg_color[2]));
@@ -507,6 +507,48 @@ function animate_loop() {
         if (check_frames(frames_per_wave, frames_per_wave*2, 4)) {
             fill_step(first_step, CRGB(degress*bg_color[0], degress*bg_color[1], degress*bg_color[2]));
             fill_step(last_step, CRGB(progress*bg_color[0], progress*bg_color[1], progress*bg_color[2]));
+        }*/
+        if (animation_frame === 1) {
+            sine_i = 0;
+            sine2_i = sine_mask.length-1;
+        }
+        if (check_frames(1, frames_per_wave*2, 4)) {
+            let bg_color = main_color1;
+            bg_color = CRGB(
+                Math.round(bg_color[0] / 2),
+                Math.round(bg_color[1] / 2),
+                Math.round(bg_color[2] / 2));
+            let points = structuredClone(sine_mask[sine_i]);
+            for (let i = 0; i < POINTS_PER_STEP; i++) {
+                points[i] = CRGB(
+                    Math.round((points[i][0] * bg_color[0]) / 256),
+                    Math.round((points[i][1] * bg_color[1]) / 256),
+                    Math.round((points[i][2] * bg_color[2]) / 256));
+            }
+            draw_step(first_step, points);
+
+            bg_color = main_color2;
+            bg_color = CRGB(
+                Math.round(bg_color[0] / 2),
+                Math.round(bg_color[1] / 2),
+                Math.round(bg_color[2] / 2));
+            points = structuredClone(sine_mask[sine2_i]);
+            for (let i = 0; i < POINTS_PER_STEP; i++) {
+                points[i] = CRGB(
+                    Math.round((points[i][0] * bg_color[0]) / 256),
+                    Math.round((points[i][1] * bg_color[1]) / 256),
+                    Math.round((points[i][2] * bg_color[2]) / 256));
+            }
+            draw_step(last_step, points);
+
+            sine_i++;
+            if (sine_i === sine_mask.length) {
+                sine_i = 0;
+            }
+            sine2_i--;
+            if (sine2_i === -1) {
+                sine2_i = sine_mask.length-1;
+            }
         }
 
 
@@ -1039,7 +1081,7 @@ function animate_loop() {
                 if (direction === UP) {
                     draw_step(first_step, points);
                 } else {
-                    draw_step(NUM_STEPS - 1, points);
+                    draw_step(last_step, points);
                 }
                 sine_i++;
                 if (sine_i === sine_mask.length) {
