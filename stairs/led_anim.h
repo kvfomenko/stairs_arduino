@@ -538,31 +538,6 @@ void animate_loop() {
 
    } else {
 
-    if (animation_mode == 0) {
-        //slow gradient wave
-        int waves_count = 1;
-        int frames_per_wave = FPS * 2;
-        CRGB wave_color1 = main_color1;
-        CRGB wave_color2 = main_color2;
-
-        for (int wave_i=0; wave_i<waves_count; wave_i++) {
-            if (check_frames(wave_i*frames_per_wave + 1, wave_i*frames_per_wave + 32, 4)) {
-                fill_step(first_step, CRGB(progress*wave_color1.r, progress*wave_color1.g, progress*wave_color1.b));
-            }
-            if (check_frames(wave_i*frames_per_wave + 32, wave_i*frames_per_wave + 64, 4)) {
-                fill_step(first_step, CRGB(degress*wave_color1.r + progress*wave_color2.r,
-                                        degress*wave_color1.g + progress*wave_color2.g,
-                                        degress*wave_color1.b + progress*wave_color2.b));
-            }
-            if (check_frames(wave_i*frames_per_wave + 64, wave_i*frames_per_wave + 96, 4)) {
-                fill_step(first_step, CRGB(degress*wave_color2.r, degress*wave_color2.g, degress*wave_color2.b));
-            }
-        }
-        if (check_frames(4, (waves_count-1)*frames_per_wave + 128 + 16, 4)) {
-            move_all();
-        }
-    }
-
     if (animation_mode == 1) {
         //slow gradient wave
         int waves_count = 5;

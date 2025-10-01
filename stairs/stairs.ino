@@ -40,6 +40,8 @@ char pass[] = WIFI_PASS;
 int status = WL_IDLE_STATUS;
 
 //tg
+//#define TG_ON TRUE
+#ifdef TG_ON
 #include <AsyncTelegram2.h>
 WiFiSSLClient client;
 AsyncTelegram2 myBot(client);
@@ -48,9 +50,10 @@ ReplyKeyboard myReplyKbd;
 TBMessage msg;
 String msgText = "";
 int last_message_id = 0;
-int tg_loop_interval = 500;
 long tg_admin = 313404677;
 bool tg_admin_log_enabled = false;
+#endif
+int tg_loop_interval = 500;
 
 int last_millis = millis();
 int last_tg_millis = millis();
@@ -148,10 +151,12 @@ void wifi_setup() {
 }
 
 void tg_log_to_admin(String message) {
+#ifdef TG_ON
   if (tg_admin_log_enabled) {
     msg.chatId = tg_admin;
     myBot.sendMessage(msg, message);
   }
+#endif
 }
 
 void tg_log_start_to_admin() {
@@ -168,6 +173,7 @@ void tg_log_start_to_admin() {
   tg_log_to_admin(dir + " ("+String(animation_frame / FPS)+") " + String(animation_mode) + " C:" + main_color1_txt.substring(0, 1) + main_color2_txt.substring(0, 1) + volt);
 }
 
+#ifdef TG_ON
 void tg_setup() {
     myBot.setUpdateTime(500);
     myBot.setTelegramToken(token);
@@ -208,6 +214,7 @@ void tg_setup() {
 
     //start_animation();
 }
+#endif
 
 
 void led_setup() {
@@ -221,6 +228,7 @@ void led_setup() {
     FastLED.show();
 }
 
+#ifdef TG_ON
 void tg_loop() {
     //log("in tg_loop");
     myBot.setUpdateTime(tg_loop_interval);
@@ -462,6 +470,25 @@ void tg_loop() {
     }
 
 }
+#endif
+
+void settings_setup() {
+  int prev_work_mode;
+  loadSettings(prev_work_mode);
+
+  if (prev_work_mode == 2) {
+    work_mode = 3;
+    log_matrix("M");
+    Serial.println("MUSIC mode");
+    //text_matrix("M");
+  } else {
+    work_mode = 2;
+    log_matrix("S");
+    Serial.println("SENSOR mode");
+    //text_matrix("S");
+  }
+  saveSettings(work_mode);
+}
 
 void setup() {
     log_setup(PORT_SPEED);
@@ -474,9 +501,11 @@ void setup() {
     mic_setup(micPin);
     matrix.begin();
     sensors_setup();
+#ifdef TG_ON
     tg_setup();
-
-    log_matrix("Hello");
+#endif
+    //log_matrix("Hello");
+    settings_setup();
 
     animation_mode = 0;
     start_animation();
@@ -492,7 +521,7 @@ void loop() {
         last_mic_millis = millis();
         mic_loop();
       }
-      tg_loop_interval = 20000;
+      tg_loop_interval = 30 * 1000;
     } else {
       if (animation_frame <= 1) {
         tg_loop_interval = 500;
@@ -501,7 +530,7 @@ void loop() {
           brightness_loop();
         }
       } else {
-        tg_loop_interval = 5 * 1000;
+        tg_loop_interval = 15 * 1000;
       }
       if (millis() - last_sensor_millis >= 10) {
         last_sensor_millis = millis();
@@ -520,10 +549,12 @@ void loop() {
 
     led_animate_loop(); // also used inside ultrasonic sensor waiting loop
 
+#ifdef TG_ON
     if (millis() - last_tg_millis >= tg_loop_interval) {
       last_tg_millis = millis();
       tg_loop();
     }
+#endif
 }
 
 void led_animate_loop() {
